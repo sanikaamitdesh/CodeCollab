@@ -11,6 +11,8 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "codemirror": "^5.65.18",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.4",
     "express": "^4.21.2",
     "monaco-editor": "^0.52.2",
     "next": "15.2.2",
@@ -24,7 +26,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
+    "eslint": "^9.22.0",
     "eslint-config-next": "15.2.2",
     "tailwindcss": "^4"
   }

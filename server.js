@@ -25,15 +25,17 @@ io.on("connection", (socket) => {
     console.log(`👥 User joined room: ${roomId}`);
 
     if (!rooms[roomId]) {
-      rooms[roomId] = "// Start coding...";
+      rooms[roomId] = { code: "// Start coding...", language: "javascript" };
     }
-    socket.emit("loadCode", rooms[roomId]);
+    socket.emit("loadCode", rooms[roomId].code);
+  });
 
-    socket.on("codeChange", ({ roomId, code }) => {
-      rooms[roomId] = code;
-      console.log(`✏️ Code Updated in Room ${roomId}:`, code);
+  socket.on("codeChange", ({ roomId, code, language }) => {
+    if (rooms[roomId]) {
+      rooms[roomId] = { code, language };
+      console.log(`✏️ Code Updated in Room ${roomId} (${language}):`, code);
       socket.to(roomId).emit("updateCode", code);
-    });
+    }
   });
 
   socket.on("disconnect", () => {
