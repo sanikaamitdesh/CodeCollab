@@ -147,13 +147,18 @@ io.on("connection", (socket) => {
 
   socket.on("codeChange", ({ roomId, code, language }) => {
     if (!rooms[roomId]) {
-      rooms[roomId] = {};
+      rooms[roomId] = { code: "", language: "javascript", messages: [] };
     }
-    rooms[roomId][language] = code;
+  
+    rooms[roomId].code = code; // Save the latest code for the room
+    rooms[roomId].language = language;
+  
     console.log(`✏️ Code Updated in Room ${roomId} (${language}):`, code);
-    socket.to(roomId).emit("updateCode", code);
+  
+    // Broadcast the change to everyone **including the sender**
+    io.to(roomId).emit("updateCode", code);
   });
-
+  
   socket.on("disconnect", () => {
     console.log(`❌ User Disconnected: ${socket.id}`);
   });

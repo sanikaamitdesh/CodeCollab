@@ -272,16 +272,17 @@ export default function Editor({ roomId }) {
 
   useEffect(() => {
     if (!mounted || typeof window === "undefined") return;
-
+  
     const loadCodeMirror = async () => {
       const { default: CodeMirror } = await import("codemirror");
       socketRef.current = io("http://localhost:4000");
-      socketRef.current.emit("joinRoom", roomId);
-
+  
+      socketRef.current.emit("joinRoom", { roomId, username: "Anonymous" });
+  
       if (editorRef.current) {
         editorRef.current.toTextArea();
       }
-
+  
       const editor = CodeMirror.fromTextArea(document.getElementById("realtimeEditor"), {
         mode: language,
         theme: "dracula",
@@ -290,39 +291,38 @@ export default function Editor({ roomId }) {
         lineNumbers: true,
         gutters: ["CodeMirror-lint-markers"],
       });
-
+  
       editorRef.current = editor;
-
-      // Load boilerplate code **when the editor is initialized**
-      const defaultCode = boilerplates[language] || "";
-      editor.setValue(defaultCode);
-
-      // Request existing code from the server
-      socketRef.current.emit("loadCode", { roomId, language });
+  
+      // 🔹 Listen for the latest code from the server
       socketRef.current.on("loadCode", (existingCode) => {
         if (existingCode) {
           editor.setValue(existingCode);
         }
       });
-
+  
+      // 🔹 Listen for real-time code updates
+      socketRef.current.on("updateCode", (newCode) => {
+        if (newCode !== editorRef.current.getValue()) {
+          editorRef.current.setValue(newCode);
+        }
+      });
+  
+      // 🔹 Send changes to the server
       editor.on("change", (instance, changes) => {
         const { origin } = changes;
         const code = instance.getValue();
+  
         if (origin !== "setValue") {
           socketRef.current.emit("codeChange", { roomId, code, language });
         }
       });
-
-      socketRef.current.on("updateCode", (code) => {
-        if (code !== null && editorRef.current.getValue() !== code) {
-          editorRef.current.setValue(code);
-        }
-      });
     };
-
+  
     loadCodeMirror();
     return () => socketRef.current?.disconnect();
   }, [roomId, language, mounted]);
+  
 
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
