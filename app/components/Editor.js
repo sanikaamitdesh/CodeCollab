@@ -44,16 +44,26 @@ export default function Editor({ roomId }) {
       socketRef.current.emit("joinRoom", roomId);
       console.log(`🔗 Connected to Room: ${roomId}`);
 
-      const editor = CodeMirror.fromTextArea(document.getElementById("realtimeEditor"), {
-        mode: language,
-        theme: "dracula",
-        autoCloseTags: true,
-        autoCloseBrackets: true,
-        lineNumbers: true,
-        gutters: ["CodeMirror-lint-markers"],
-      });
+      const editor = CodeMirror.fromTextArea(
+        document.getElementById("realtimeEditor"),
+        {
+          mode: language,
+          theme: "dracula",
+          autoCloseTags: true,
+          autoCloseBrackets: true,
+          lineNumbers: true,
+          gutters: ["CodeMirror-lint-markers"],
+        }
+      );
 
       editorRef.current = editor;
+
+      // console.log("editor:", editor);
+
+      // Access the CodeMirror wrapper element and set its height
+      const cmWrapper = editor.getWrapperElement(); // Get the CodeMirror wrapper element
+      cmWrapper.style.height = "550px"; // Set the height
+
 
       socketRef.current.on("loadCode", (existingCode) => {
         if (existingCode) {
@@ -64,13 +74,14 @@ export default function Editor({ roomId }) {
       editor.on("change", (instance, changes) => {
         const { origin } = changes;
         const code = instance.getValue();
-
         if (origin !== "setValue") {
+          console.log(`Sending code change:`, code);
           socketRef.current.emit("codeChange", { roomId, code, language });
         }
       });
 
       socketRef.current.on("updateCode", (code) => {
+        // console.log("Received updated code:", code)
         if (code !== null && editorRef.current.getValue() !== code) {
           editorRef.current.setValue(code);
         }
@@ -82,6 +93,10 @@ export default function Editor({ roomId }) {
           socketRef.current.connect();
         }, 3000);
       });
+
+      socketRef.current.on("reconnect", () => {
+        console.log("🔄 WebSocket Reconnected!");
+      });
     };
 
     loadCodeMirror();
@@ -89,7 +104,7 @@ export default function Editor({ roomId }) {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [roomId, language, mounted]);
+  }, [roomId, mounted]);
 
   // Prevent rendering until mounted (fixes hydration error)
   if (!mounted) return null;
