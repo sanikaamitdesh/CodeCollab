@@ -25,9 +25,33 @@ io.on("connection", (socket) => {
     console.log(`👥 User joined room: ${roomId}`);
 
     if (!rooms[roomId]) {
-      rooms[roomId] = { code: "// Start coding...", language: "javascript" };
+      rooms[roomId] ={ code: "// Start coding...",
+        language: "javascript",
+      messages: [],}
     }
     socket.emit("loadCode", rooms[roomId].code);
+    socket.emit("loadMessages", rooms[roomId].messages);
+  });
+
+  socket.on("sendMessage", ({ roomId, message }) => {
+    console.log(`💬 Received message for Room ${roomId}:`, message);
+  
+    // Check if the room exists
+    if (!rooms[roomId]) {
+      console.error(`❌ Room ${roomId} does not exist!`);
+      return; // Exit early if room does not exist
+    }
+
+    if (!Array.isArray(rooms[roomId].messages)) {
+      rooms[roomId].messages = []; // Reinitialize if undefined or not an array
+    }
+  
+    const newMessage = { id: socket.id, message };
+    rooms[roomId].messages.push(newMessage); // Add message to the room
+    console.log(`💬 Message added to Room ${roomId}:`, newMessage);
+  
+    // Broadcast the new message to everyone in the room
+    io.to(roomId).emit("receiveMessage", newMessage);
   });
 
   socket.on("codeChange", ({ roomId, code, language }) => {
@@ -37,6 +61,8 @@ io.on("connection", (socket) => {
       socket.to(roomId).emit("updateCode", code);
     }
   });
+
+  
 
   socket.on("disconnect", () => {
     console.log(`❌ User Disconnected: ${socket.id}`);

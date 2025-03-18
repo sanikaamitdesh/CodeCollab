@@ -25,15 +25,30 @@ io.on("connection", (socket) => {
     console.log(`👥 User joined room: ${roomId}`);
 
     if (!rooms[roomId]) {
-      rooms[roomId] = "// Start coding...";
+      rooms[roomId] ={ code: "// Start coding...",
+        language: "javascript",
+      messages: [],}
     }
     socket.emit("loadCode", rooms[roomId]);
+    socket.emit("loadMessages", rooms[roomId].messages);
 
     socket.on("codeChange", ({ roomId, code }) => {
       rooms[roomId] = code;
       console.log(`✏️ Code Updated in Room ${roomId}:`, code);
       socket.to(roomId).emit("updateCode", code);
     });
+  });
+
+  socket.on("sendMessage", ({ roomId, message }) => {
+    if (rooms[roomId]) {
+      const newMessage = { id: socket.id, message };
+      rooms[roomId].messages.push(newMessage);
+
+      console.log(`💬 Message in Room ${roomId}:`, newMessage);
+
+      // Broadcast the message to all users in the room
+      io.to(roomId).emit("receiveMessage", newMessage);
+    }
   });
 
   socket.on("disconnect", () => {
