@@ -234,6 +234,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { io } from "socket.io-client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Dynamically import CodeMirror to prevent SSR errors
 const CodeMirror = dynamic(() => import("codemirror"), { ssr: false });
@@ -265,9 +267,13 @@ export default function Editor({ roomId }) {
   const socketRef = useRef(null);
   const [language, setLanguage] = useState("javascript");
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
+    const token = localStorage.getItem("token");
+    setUser(token ? true : false);
   }, []);
 
   useEffect(() => {
@@ -334,10 +340,40 @@ export default function Editor({ roomId }) {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    router.push("/");
+  };
+
   if (!mounted) return null;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center relative w-full">
+      {/* Top Right Login/Signup or Dashboard/Logout */}
+      <div className="absolute top-4 right-4 flex gap-4">
+        {user ? (
+          <>
+            <Link href="/dashboard" className="bg-gray-700 px-4 py-2 rounded text-white hover:bg-gray-800">
+              Dashboard
+            </Link>
+            <button onClick={handleLogout} className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700">
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700">
+              Login
+            </Link>
+            <Link href="/signup" className="bg-green-500 px-4 py-2 rounded text-white hover:bg-green-700">
+              Signup
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/* Language Selection */}
       <select value={language} onChange={handleLanguageChange} className="mb-2 p-2 rounded bg-gray-700 text-white">
         <option value="javascript">JavaScript</option>
         <option value="python">Python</option>
@@ -345,6 +381,8 @@ export default function Editor({ roomId }) {
         <option value="c">C</option>
         <option value="cpp">C++</option>
       </select>
+
+      {/* Code Editor */}
       <div style={{ height: "600px", width: "100%" }}>
         <textarea id="realtimeEditor"></textarea>
       </div>
