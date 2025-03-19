@@ -280,11 +280,11 @@ export default function VideoChat({ roomId, socket, userId, setShowVideo }) {
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-800 p-4 flex justify-center space-x-4">
+      <div className="bg-gray-800 p-4 flex justify-center items-center space-x-4">
         <Button
           variant="outline"
           size="icon"
-          className={`rounded-full ${
+          className={`flex items-center justify-center rounded-full ${
             isMuted ? "bg-red-600 text-white" : "bg-gray-700 text-white"
           }`}
           onClick={toggleMute}
@@ -298,7 +298,7 @@ export default function VideoChat({ roomId, socket, userId, setShowVideo }) {
         <Button
           variant="outline"
           size="icon"
-          className={`rounded-full ${
+          className={`flex items-center justify-center rounded-full ${
             isVideoOff ? "bg-red-600 text-white" : "bg-gray-700 text-white"
           }`}
           onClick={toggleVideo}
@@ -312,7 +312,7 @@ export default function VideoChat({ roomId, socket, userId, setShowVideo }) {
         <Button
           variant="outline"
           size="icon"
-          className="rounded-full bg-red-600 text-white"
+          className="flex items-center justify-center rounded-full bg-red-600 text-white"
           onClick={leaveCall}
         >
           <PhoneOff className="h-5 w-5" />
