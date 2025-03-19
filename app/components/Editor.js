@@ -596,7 +596,7 @@ export default function Editor({ roomId }) {
           
             <button
               onClick={() => router.push("/login")}
-              className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700"
+              className="bg-blue-500 px-1 py-7 rounded text-white hover:bg-blue-700"
             >
               Login
             </button>
