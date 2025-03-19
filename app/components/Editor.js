@@ -469,68 +469,212 @@ export default function Editor({ roomId }) {
   const [fontFamily, setFontFamily] = useState("Fira Code"); // Default font family
   const [codeStorage, setCodeStorage] = useState({});
   const [username, setUsername] = useState(null);
+  const editorRef = useRef(null);
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   const storedUsername = localStorage.getItem("username");
+
+  //   if (token && storedUsername) {
+  //     setUsername(storedUsername); // Set username from localStorage
+  //   }
+  //   // const token = localStorage.getItem("token");
+
+  //   // if (token) {
+  //   //   router.push("/dashboard"); // Redirect logged-in users to the dashboard
+  //   //   return;
+  //   // }
+  //   socketRef.current = io("http://localhost:4000");
+  //   socketRef.current.emit("joinRoom", roomId);
+  // //   socketRef.current.on("loadCode", (existingCode) => {
+  // //     setCode(existingCode);
+  // //     setCodeStorage((prev) => ({ ...prev, [language]: existingCode }));
+  // // });
+
+  //   // Load code when the room is joined
+  //   socketRef.current.emit("loadCode", { roomId, language });
+  //   socketRef.current.on("loadCode", (existingCode) => {
+  //     if (existingCode) {
+  //       setCodeStorage((prev) => ({ ...prev, [language]: existingCode }));
+  //       setCode(existingCode);
+  //     } else {
+  //       setCodeStorage((prev) => ({ ...prev, [language]: boilerplates[language] }));
+  //       setCode(boilerplates[language]);
+  //     }
+  //   });
+
+  //   socketRef.current.on("updateCode", (newCode) => {
+  //     setCode(newCode);
+  //     setCodeStorage((prev) => ({ ...prev, [language]: newCode }));
+  //     if (language === "cpp" || language === "java" || language === "c") {
+  //       checkSyntax(newCode, language); // Check syntax on code update
+  //     }
+  //   });
+
+  //   return () => socketRef.current?.disconnect();
+  // }, [roomId, language]);
+
+  // const handleEditorChange = (value) => {
+  //   setCode(value);
+  //   setCodeStorage((prev) => ({ ...prev, [language]: value }));
+  //   checkSyntax(value, language); // Check syntax on change
+  //   socketRef.current.emit("codeChange", { roomId, code: value, language });
+  // };
+
+  // const handleLogout = () => {
+  //   localStorage.removeItem("token");
+  //   localStorage.removeItem("username");
+  //   setUsername(null);
+  //   router.push("/");
+  // };
+
+  // const handleLanguageChange = (e) => {
+  //   const newLang = e.target.value;
+  //   setLanguage(newLang);
+  //   const existingCode = codeStorage[newLang] || boilerplates[newLang];
+  //   setCode(existingCode);
+  //   checkSyntax(existingCode, newLang); // Check syntax on language change
+  // };
+
+  // const handleFontSizeChange = (e) => {
+  //   setFontSize(e.target.value);
+  // };
+
+  // const handleFontFamilyChange = (e) => {
+  //   setFontFamily(e.target.value);
+  // };
+  // const handleSaveCode = async () => {
+  //   const token = localStorage.getItem("token");
+  
+  //   if (!token) {
+  //     alert("You need to log in to save your code.");
+  //     router.push("/login");
+  //     return;
+  //   }
+  
+  //   try {
+  //     const response = await fetch("/api/saveCode", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({
+  //         roomId,
+  //         language,
+  //         code,
+  //       }),
+  //     });
+  
+  //     const data = await response.json();
+  
+  //     if (response.ok) {
+  //       alert("✅ Code saved successfully!");
+  //     } else {
+  //       alert(`❌ Failed to save code: ${data.error || "Unknown error"}`);
+  //     }
+  //   } catch (error) {
+  //     alert(`❌ Error saving code: ${error.message}`);
+  //   }
+  // };
+  // useEffect(() => {
+  //   // Fetch user info from localStorage
+  //   const token = localStorage.getItem("token");
+  //   const storedUsername = localStorage.getItem("username");
+
+  //   if (token && storedUsername) {
+  //     setUsername(storedUsername);
+  //   }
+
+  //   // Initialize WebSocket
+  //   socketRef.current = io("http://localhost:4000");
+  //   console.log("🔗 Connected to WebSocket");
+
+  //   // Join room
+  //   socketRef.current.emit("joinRoom", { roomId });
+
+  //   // Load initial code
+  //   socketRef.current.emit("loadCode", { roomId, language });
+
+  //   // Listen for updates
+  //   socketRef.current.on("loadCode", (existingCode) => {
+  //     console.log("📥 Loading initial code:", existingCode);
+  //     if (existingCode) {
+  //       setCode(existingCode);
+  //       setCodeStorage((prev) => ({ ...prev, [language]: existingCode }));
+  //     }
+  //   });
+
+  //   socketRef.current.on("updateCode", ({ code: newCode, language: newLang }) => {
+  //     console.log("📩 Received code update:", newCode);
+      
+  //     if (editorRef.current && editorRef.current.getValue() !== newCode) {
+  //       editorRef.current.setValue(newCode);
+  //     }
+      
+  //     setCodeStorage((prev) => ({ ...prev, [newLang]: newCode }));
+  //   });
+
+  //   return () => {
+  //     console.log("❌ Disconnecting WebSocket...");
+  //     socketRef.current.disconnect();
+  //   };
+  // }, [roomId]); // ✅ Only reconnect when roomId changes
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUsername = localStorage.getItem("username");
 
     if (token && storedUsername) {
-      setUsername(storedUsername); // Set username from localStorage
+      setUsername(storedUsername);
     }
-    // const token = localStorage.getItem("token");
 
-    // if (token) {
-    //   router.push("/dashboard"); // Redirect logged-in users to the dashboard
-    //   return;
-    // }
     socketRef.current = io("http://localhost:4000");
-    socketRef.current.emit("joinRoom", roomId);
+    console.log("🔗 Connected to WebSocket");
 
-    // Load code when the room is joined
+    socketRef.current.emit("joinRoom", { roomId });
+
     socketRef.current.emit("loadCode", { roomId, language });
+
     socketRef.current.on("loadCode", (existingCode) => {
+      console.log("📥 Loading initial code:", existingCode);
       if (existingCode) {
-        setCodeStorage((prev) => ({ ...prev, [language]: existingCode }));
         setCode(existingCode);
-      } else {
-        setCodeStorage((prev) => ({ ...prev, [language]: boilerplates[language] }));
-        setCode(boilerplates[language]);
+        setCodeStorage((prev) => ({ ...prev, [language]: existingCode }));
       }
     });
 
-    socketRef.current.on("updateCode", (newCode) => {
-      setCode(newCode);
-      setCodeStorage((prev) => ({ ...prev, [language]: newCode }));
-      if (language === "cpp" || language === "java" || language === "c") {
-        checkSyntax(newCode, language); // Check syntax on code update
+    socketRef.current.on("updateCode", ({ code: newCode, language: newLang }) => {
+      console.log("📩 Received code update:", newCode);
+    
+      // ✅ Prevent infinite loop by checking if the code is already set
+      if (editorRef.current && editorRef.current.getValue() !== newCode) {
+        editorRef.current.setValue(newCode);
+        setCode(newCode);
+        setCodeStorage((prev) => ({ ...prev, [newLang]: newCode }));
       }
     });
+    
 
-    return () => socketRef.current?.disconnect();
-  }, [roomId, language]);
+    return () => {
+      console.log("❌ Disconnecting WebSocket...");
+      socketRef.current.disconnect();
+    };
+  }, [roomId]);
 
+  // Handle editor mount
+  const handleEditorDidMount = (editor, monaco) => {
+    editorRef.current = editor;
+    console.log("✅ Monaco Editor Mounted:", editor);
+  };
+  // Handle code changes
   const handleEditorChange = (value) => {
     setCode(value);
     setCodeStorage((prev) => ({ ...prev, [language]: value }));
-    checkSyntax(value, language); // Check syntax on change
+
+    console.log("✏️ Emitting code change...");
     socketRef.current.emit("codeChange", { roomId, code: value, language });
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    setUsername(null);
-    router.push("/");
-  };
-
-  const handleLanguageChange = (e) => {
-    const newLang = e.target.value;
-    setLanguage(newLang);
-    const existingCode = codeStorage[newLang] || boilerplates[newLang];
-    setCode(existingCode);
-    checkSyntax(existingCode, newLang); // Check syntax on language change
-  };
-
-  const handleFontSizeChange = (e) => {
+const handleFontSizeChange = (e) => {
     setFontSize(e.target.value);
   };
 
@@ -570,6 +714,25 @@ export default function Editor({ roomId }) {
     } catch (error) {
       alert(`❌ Error saving code: ${error.message}`);
     }
+  };
+  // Handle language change
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setLanguage(newLang);
+    const existingCode = codeStorage[newLang] || boilerplates[newLang];
+    
+    setCode(existingCode);
+    
+    console.log("🔄 Changing language, emitting update...");
+    socketRef.current.emit("codeChange", { roomId, code: existingCode, language: newLang });
+  };
+
+  // Handle user logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setUsername(null);
+    router.push("/");
   };
   
   return (
@@ -661,6 +824,7 @@ export default function Editor({ roomId }) {
             fontFamily: fontFamily,
           }}
           onChange={handleEditorChange}
+          onMount={handleEditorDidMount}
         />
       </div>
     </div>

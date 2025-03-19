@@ -108,9 +108,9 @@ io.on("connection", (socket) => {
     console.log(`🛑 Received event: ${event}`, args);
   });  
 
-  socket.onAny((event, ...args) => {
-    console.log(`🛑 Received event: ${event}`, args);
-  });  
+  // socket.onAny((event, ...args) => {
+  //   console.log(`🛑 Received event: ${event}`, args);
+  // });  
 
   socket.on("joinRoom", ({ roomId, username }) => {
     socket.join(roomId);
@@ -158,15 +158,17 @@ io.on("connection", (socket) => {
       rooms[roomId] = { code: "", language: "javascript", messages: [] };
     }
   
-    rooms[roomId].code = code; // Save the latest code for the room
+    rooms[roomId].code = code; // ✅ Save the latest code
     rooms[roomId].language = language;
   
     console.log(`✏️ Code Updated in Room ${roomId} (${language}):`, code);
   
-    // Broadcast the change to everyone **including the sender**
-    io.to(roomId).emit("updateCode", code);
+    // ✅ Broadcast update to all other users EXCEPT the sender to prevent loops
+    io.to(roomId).emit("updateCode", { code, language });  
+    console.log(`✅ Emitted updateCode event to room ${roomId} (excluding sender)`);
   });
   
+
 
   // Handle video chat signaling
   socket.on("join-video", ({ roomId, userId }) => {
