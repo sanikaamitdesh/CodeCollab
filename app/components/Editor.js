@@ -398,7 +398,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { io } from "socket.io-client";
-
+import { useRouter } from "next/navigation";
 // Dynamically import Monaco Editor to avoid SSR errors
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -461,14 +461,27 @@ function checkSyntax(code, language) {
 }
 
 export default function Editor({ roomId }) {
+  const router = useRouter();
   const socketRef = useRef(null);
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(boilerplates[language]);
   const [fontSize, setFontSize] = useState(14); // Default font size
   const [fontFamily, setFontFamily] = useState("Fira Code"); // Default font family
   const [codeStorage, setCodeStorage] = useState({});
-
+  const [username, setUsername] = useState(null);
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUsername = localStorage.getItem("username");
+
+    if (token && storedUsername) {
+      setUsername(storedUsername); // Set username from localStorage
+    }
+    // const token = localStorage.getItem("token");
+
+    // if (token) {
+    //   router.push("/dashboard"); // Redirect logged-in users to the dashboard
+    //   return;
+    // }
     socketRef.current = io("http://localhost:4000");
     socketRef.current.emit("joinRoom", roomId);
 
@@ -502,6 +515,13 @@ export default function Editor({ roomId }) {
     socketRef.current.emit("codeChange", { roomId, code: value, language });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setUsername(null);
+    router.push("/");
+  };
+
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setLanguage(newLang);
@@ -517,10 +537,85 @@ export default function Editor({ roomId }) {
   const handleFontFamilyChange = (e) => {
     setFontFamily(e.target.value);
   };
-
+  const handleSaveCode = async () => {
+    const token = localStorage.getItem("token");
+  
+    if (!token) {
+      alert("You need to log in to save your code.");
+      router.push("/login");
+      return;
+    }
+  
+    try {
+      const response = await fetch("/api/saveCode", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          roomId,
+          language,
+          code,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert("✅ Code saved successfully!");
+      } else {
+        alert(`❌ Failed to save code: ${data.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      alert(`❌ Error saving code: ${error.message}`);
+    }
+  };
+  
   return (
     <div className="flex flex-col items-left bg-gray-900 p-6 rounded-lg shadow-lg">
+       <div className="absolute top-4 right-4 flex items-center space-x-4">
+        {username ? (
+          <>
+            <span className="text-white">👤 {username}</span>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="bg-green-500 px-4 py-2 rounded text-white hover:bg-green-700"
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+          
+            <button
+              onClick={() => router.push("/login")}
+              className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => router.push("/signup")}
+              className="bg-green-500 px-4 py-2 rounded text-white hover:bg-green-700"
+            >
+              Signup
+            </button>
+          </>
+        )}
+      </div>
       <div className="flex space-x-4 mb-4">
+      <button
+          onClick={handleSaveCode}
+          className="bg-yellow-500 px-4 py-2 rounded text-white hover:bg-yellow-600"
+        >
+          Save Code
+        </button>
         <select
           value={language}
           onChange={handleLanguageChange}
@@ -571,4 +666,3 @@ export default function Editor({ roomId }) {
     </div>
   );
 }
-

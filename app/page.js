@@ -43,7 +43,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
-
+import Link from "next/link";
 export default function Home() {
   const [roomId, setRoomId] = useState("");
   const [username, setUsername] = useState("");
@@ -55,8 +55,12 @@ export default function Home() {
       <div className="flex justify-between items-center p-4 border-b border-gray-700">
         <h1 className="text-2xl font-bold text-white">CodeCollab</h1>
         <div>
-          <button className="mx-2 text-sm text-gray-300 hover:text-white">Sign Up</button>
-          <button className="mx-2 text-sm text-gray-300 hover:text-white">Log In</button>
+        <button className="mx-2 text-sm text-gray-300 hover:text-white">
+  <Link href="/signup">Sign Up</Link>
+</button>
+<button className="mx-2 text-sm text-gray-300 hover:text-white">
+  <Link href="/login">Log In</Link>
+</button>
         </div>
       </div>
 
