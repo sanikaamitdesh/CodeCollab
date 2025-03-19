@@ -469,6 +469,7 @@ export default function Editor({ roomId }) {
   const [fontFamily, setFontFamily] = useState("Fira Code"); // Default font family
   const [codeStorage, setCodeStorage] = useState({});
   const [username, setUsername] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUsername = localStorage.getItem("username");
@@ -488,6 +489,7 @@ export default function Editor({ roomId }) {
     // Load code when the room is joined
     socketRef.current.emit("loadCode", { roomId, language });
     socketRef.current.on("loadCode", (existingCode) => {
+
       if (existingCode) {
         setCodeStorage((prev) => ({ ...prev, [language]: existingCode }));
         setCode(existingCode);
@@ -499,7 +501,10 @@ export default function Editor({ roomId }) {
 
     socketRef.current.on("updateCode", (newCode) => {
       setCode(newCode);
-      setCodeStorage((prev) => ({ ...prev, [language]: newCode }));
+      setCodeStorage((prev) => (
+        { ...prev, [language]: newCode }
+      ));
+
       if (language === "cpp" || language === "java" || language === "c") {
         checkSyntax(newCode, language); // Check syntax on code update
       }

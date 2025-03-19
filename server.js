@@ -76,12 +76,6 @@
 // });
 
 
-
-
-
-
-
-
 const { Server } = require("socket.io");
 const http = require("http");
 const express = require("express");
@@ -108,22 +102,17 @@ io.on("connection", (socket) => {
     console.log(`🛑 Received event: ${event}`, args);
   });  
 
-  socket.onAny((event, ...args) => {
-    console.log(`🛑 Received event: ${event}`, args);
-  });  
-
   socket.on("joinRoom", ({ roomId, username }) => {
     socket.join(roomId);
     console.log(`👥 User (${username}) joined room: ${roomId}`);
 
     if (!rooms[roomId]) {
       rooms[roomId] = {
-        code: "// Start coding...",
+        code: "",
         language: "javascript",
         messages: [],
       };
     }
-
     
     socket.emit("loadCode", rooms[roomId].code);
     socket.emit("loadMessages", rooms[roomId].messages);
@@ -157,7 +146,8 @@ io.on("connection", (socket) => {
     if (!rooms[roomId]) {
       rooms[roomId] = { code: "", language: "javascript", messages: [] };
     }
-  
+
+    // console.log(code);
     rooms[roomId].code = code; // Save the latest code for the room
     rooms[roomId].language = language;
   
