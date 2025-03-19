@@ -95,7 +95,7 @@ export default function RoomPage() {
         )}
 
 
-<div className="bg-gray-800 rounded-lg p-4 shadow-md h-full">
+      <div className="bg-gray-800 rounded-lg p-4 shadow-md h-full">
           <h3 className="text-xl font-semibold mb-2">Live Group Chat</h3>
           <ChatRoom roomId={roomID} username={username} />
         </div>
