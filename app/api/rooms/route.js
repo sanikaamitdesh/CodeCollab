@@ -54,7 +54,7 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({ message: "Room created/joined successfully", room }, { status: 201 });
+    return NextResponse.json({ message: "Room created/joined successfully", username:user.username,room }, { status: 201 });
   } catch (error) {
     console.error("Error creating/joining room:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -366,9 +366,12 @@ io.on("connection", (socket) => {
     socket.emit("loadMessages", rooms[roomId].messages);
 
     // Send a message to the room that a new user has joined
-    const joinMessage = { username: "System", message: `${username} joined the room.` };
-    rooms[roomId].messages.push(joinMessage);
-    io.to(roomId).emit("receiveMessage", joinMessage);
+    if(username && username !== "undefined")
+    {
+      const joinMessage = { username: "System", message: `${username} joined the room.` };
+      rooms[roomId].messages.push(joinMessage);
+      io.to(roomId).emit("receiveMessage", joinMessage);
+    }
   });
 
   socket.on("sendMessage", ({ roomId, message, username }) => {
