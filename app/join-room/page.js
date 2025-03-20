@@ -29,8 +29,9 @@ export default function JoinRoom() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to join room");
+      const username=data.username;
 
-      router.push(`/room/${roomId}`);
+      router.push(`/room/${roomId}?username=${username}`);
     } catch (error) {
       console.error("Error joining room:", error);
     } finally {
@@ -46,7 +47,7 @@ export default function JoinRoom() {
         placeholder="Enter Room ID"
         value={roomId}
         onChange={(e) => setRoomId(e.target.value)}
-        className="p-2 border border-gray-400 rounded text-black mb-2"
+        className="p-2 border border-gray-400 rounded text-white mb-2"
       />
       <button
         onClick={handleJoinRoom}
