@@ -298,23 +298,6 @@
 // });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const { Server } = require("socket.io");
 const http = require("http");
 const express = require("express");
@@ -362,9 +345,9 @@ io.on("connection", (socket) => {
     console.log(`🛑 Received event: ${event}`, args);
   });  
 
-  socket.onAny((event, ...args) => {
-    console.log(`🛑 Received event: ${event}`, args);
-  });  
+  // socket.onAny((event, ...args) => {
+  //   console.log(`🛑 Received event: ${event}`, args);
+  // });  
 
   socket.on("joinRoom", ({ roomId, username }) => {
     socket.join(roomId);
@@ -373,13 +356,12 @@ io.on("connection", (socket) => {
     // Check if room exists, if not, initialize with boilerplate code
     if (!rooms[roomId]) {
       rooms[roomId] = {
-        code: boilerplates[language] || boilerplates.javascript, // Use the language boilerplate
-        language: language || "javascript",
+        code: "",
+        language: "javascript",
         messages: [],
       };
     }
-
-    // Send the current code and messages to the user when they join
+    
     socket.emit("loadCode", rooms[roomId].code);
     socket.emit("loadMessages", rooms[roomId].messages);
 
@@ -412,16 +394,18 @@ io.on("connection", (socket) => {
     if (!rooms[roomId]) {
       rooms[roomId] = { code: "", language: "javascript", messages: [] };
     }
-
-    rooms[roomId].code = code; // Save the latest code for the room
+  
+    rooms[roomId].code = code; // ✅ Save the latest code
     rooms[roomId].language = language;
 
     console.log(`✏️ Code Updated in Room ${roomId} (${language}):`, code);
-
-    // Broadcast the change to everyone *including the sender*
-    io.to(roomId).emit("updateCode", code);
+  
+    // ✅ Broadcast update to all other users EXCEPT the sender to prevent loops
+    io.to(roomId).emit("updateCode", { code, language });  
+    console.log(`✅ Emitted updateCode event to room ${roomId} (excluding sender)`);
   });
   
+
 
   // Handle video chat signaling
   socket.on("join-video", ({ roomId, userId }) => {
