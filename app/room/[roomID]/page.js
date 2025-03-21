@@ -83,7 +83,7 @@ export default function RoomPage() {
             <div className="flex items-center justify-center">
             <button
               onClick={() => setShowVideo(!showVideo)}
-              className="px-12 py-3 rounded bg-green-600 "
+              className="px-12 py-3 rounded bg-green-500 "
             >
               Join Video
             </button>
