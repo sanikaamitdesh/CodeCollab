@@ -656,6 +656,11 @@ const [error, setError] = useState("");
         setCodeStorage((prev) => ({ ...prev, [newLang]: newCode }));
       }
     });
+    socketRef.current.on("outputUpdate", ({ output, error }) => {
+      setOutput(output);
+      setError(error);
+    });
+    
     
 
     return () => {
@@ -720,8 +725,7 @@ const handleFontSizeChange = (e) => {
       setError(err.message);
       setOutput("");
     }
-  };
-  const handleRunCode = async () => {
+  };const handleRunCode = async () => {
     const langMap = {
       cpp: 54,
       c: 50,
@@ -748,18 +752,23 @@ const handleFontSizeChange = (e) => {
   
       const data = await response.json();
   
-      // ✅ Instead of alert(), just set the output
       if (data.stderr) {
-        setError(data.stderr);
+        const errorText = data.stderr;
+        setError(errorText);
         setOutput("");
+        socketRef.current.emit("outputUpdate", { roomId, output: "", error: errorText });
       } else {
-        setOutput(data.stdout || data.message || "✅ No output");
+        const outputText = data.stdout || data.message || "✅ No output";
+        setOutput(outputText);
         setError("");
+        socketRef.current.emit("outputUpdate", { roomId, output: outputText, error: "" });
       }
+  
     } catch (error) {
       console.error("Execution Error:", error);
       setError(error.message);
       setOutput("");
+      socketRef.current.emit("outputUpdate", { roomId, output: "", error: error.message });
     }
   };
   
