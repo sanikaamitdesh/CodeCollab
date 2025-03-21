@@ -169,7 +169,11 @@ io.on("connection", (socket) => {
   });
   
 
-
+  socket.on("outputUpdate", ({ roomId, output, error }) => {
+    console.log(`📤 Output shared in Room ${roomId}`);
+    io.to(roomId).emit("outputUpdate", { output, error });
+  });
+  
   // Handle video chat signaling
   socket.on("join-video", ({ roomId, userId }) => {
     // Notify all users in the room that a new user joined

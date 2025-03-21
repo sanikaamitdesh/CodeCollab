@@ -470,6 +470,9 @@ export default function Editor({ roomId }) {
   const [codeStorage, setCodeStorage] = useState({});
   const [username, setUsername] = useState(null);
   const editorRef = useRef(null);
+  const [output, setOutput] = useState("");
+const [error, setError] = useState("");
+
   // useEffect(() => {
   //   const token = localStorage.getItem("token");
   //   const storedUsername = localStorage.getItem("username");
@@ -706,15 +709,61 @@ const handleFontSizeChange = (e) => {
   
       const data = await response.json();
   
-      if (response.ok) {
-        alert("✅ Code saved successfully!");
+      if (data.stderr) {
+        setError(data.stderr);
+        setOutput("");
       } else {
-        alert(`❌ Failed to save code: ${data.error || "Unknown error"}`);
+        setOutput(data.stdout || "No output");
+        setError("");
       }
-    } catch (error) {
-      alert(`❌ Error saving code: ${error.message}`);
+    } catch (err) {
+      setError(err.message);
+      setOutput("");
     }
   };
+  const handleRunCode = async () => {
+    const langMap = {
+      cpp: 54,
+      c: 50,
+      java: 62,
+      python: 71,
+      javascript: 63,
+    };
+  
+    const languageId = langMap[language];
+  
+    try {
+      const response = await fetch("https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-RapidAPI-Key": "ac5f0d4a15mshfe07a6090e0e4bap13515cjsn4950c722e229",
+          "X-RapidAPI-Host": "judge029.p.rapidapi.com"
+        },
+        body: JSON.stringify({
+          source_code: code,
+          language_id: languageId
+        })
+      });
+  
+      const data = await response.json();
+  
+      // ✅ Instead of alert(), just set the output
+      if (data.stderr) {
+        setError(data.stderr);
+        setOutput("");
+      } else {
+        setOutput(data.stdout || data.message || "✅ No output");
+        setError("");
+      }
+    } catch (error) {
+      console.error("Execution Error:", error);
+      setError(error.message);
+      setOutput("");
+    }
+  };
+  
+  
   // Handle language change
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
@@ -790,6 +839,13 @@ const handleFontSizeChange = (e) => {
           <option value="c">C</option>
           <option value="cpp">C++</option>
         </select>
+        <button
+  onClick={handleRunCode}
+  className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700"
+>
+  ▶️ Run
+</button>
+
         <select
           value={fontFamily}
           onChange={handleFontFamilyChange}
@@ -827,6 +883,18 @@ const handleFontSizeChange = (e) => {
           onMount={handleEditorDidMount}
         />
       </div>
+      {/* Output Panel */}
+<div className="mt-4 w-full bg-black text-white p-4 rounded max-h-64 overflow-y-auto">
+  <h3 className="text-green-400 font-semibold mb-2">▶️ Output:</h3>
+  {output && <pre className="text-green-300">{output}</pre>}
+  {error && (
+    <div className="text-red-400">
+      <strong>Error:</strong>
+      <pre>{error}</pre>
+    </div>
+  )}
+</div>
+
     </div>
   );
 }
