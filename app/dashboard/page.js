@@ -31,6 +31,33 @@ export default function Dashboard() {
     fetchRooms();
   }, []);
 
+  const handleLeaveRoom = async(roomId) => {
+    if(!confirm("Are you sure you want to leave this room?")) return;
+
+    try{
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`/api/rooms`,{
+        method: "DELETE",
+        headers:{
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({roomId}),
+      })
+
+      const data = await response.json();
+
+      if(response.ok){
+        setRooms((prevRooms) => prevRooms.filter((room) => room.roomId !== roomId));
+      } else{
+        alert("Error leaving room: ", data.error);
+      } 
+    }catch(error){
+      console.error("Error leaving room", error);
+    }
+  }
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-900 text-white p-6">
       <h1 className="text-3xl font-bold mb-6">Your Rooms</h1>
@@ -44,9 +71,17 @@ export default function Dashboard() {
           {rooms.map((room) => (
             <div
               key={room.roomId}
-              className="bg-gray-800 p-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 cursor-pointer border border-gray-700 hover:border-blue-500"
+              className="bg-gray-800 p-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 cursor-pointer border border-gray-700 hover:border-blue-500 flex flex-col items-center"
             >
-              <p className="text-lg font-semibold text-center">Room ID: <span className="text-blue-400">{room.roomId}</span></p>
+              <p className="text-lg font-semibold text-center pb-3">
+                Room ID: <span className="text-blue-400">{room.roomId}</span>
+              </p>
+              <button
+                onClick={() => handleLeaveRoom(room.roomId)}
+                className="bg-red-600 px-3 py-1 rounded text-white hover:bg-red-700"
+              >
+                Leave Room
+              </button>
             </div>
           ))}
         </div>

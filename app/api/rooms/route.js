@@ -54,9 +54,43 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({ message: "Room created/joined successfully", username:user.username,room }, { status: 201 });
+    return NextResponse.json({ message: "Room created/joined successfully!", username:user.username,room }, { status: 201 });
   } catch (error) {
     console.error("Error creating/joining room:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req){
+  try{
+    const {roomId} = await req.json();
+    if (!roomId) return NextResponse.json({ error: "Room ID is required" }, { status: 400 });
+
+    await connectToDatabase();
+
+    const token = req.headers.get("authorization")?.split(" ")[1];
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if(!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    let room = await Room.findOne({ roomId });
+    if(!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    if(!room.members.includes(user._id)) return NextResponse.json({ error: "Incorrect Room ID" }, { status: 400 });
+
+    const updatedRoom = await Room.findOneAndUpdate(
+      { roomId },
+      { $pull: { members: user._id } },
+      { new: true }
+    );
+
+    // console.log("User removed from room:", updatedRoom);
+    
+    return NextResponse.json({message: "Room deleted successfully!", updatedRoom}, {status: 201});
+  } catch(error){
+    console.error("Error deleting room:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
