@@ -5,7 +5,8 @@ const CodeSnippetSchema = new mongoose.Schema({
   roomId: { type: String, required: true },
   language: { type: String, required: true },
   code: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
+}, {
+  timestamps: true,
 });
 
 // Check if model already exists before defining it

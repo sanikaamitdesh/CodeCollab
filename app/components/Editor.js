@@ -117,7 +117,6 @@
 // // //   );
 // // // }
 
-
 // // "use client";
 
 // // import React, { useEffect, useRef, useState } from "react";
@@ -278,17 +277,17 @@
 
 //   useEffect(() => {
 //     if (!mounted || typeof window === "undefined") return;
-  
+
 //     const loadCodeMirror = async () => {
 //       const { default: CodeMirror } = await import("codemirror");
 //       socketRef.current = io("http://localhost:4000");
-  
+
 //       socketRef.current.emit("joinRoom", { roomId, username: "Anonymous" });
-  
+
 //       if (editorRef.current) {
 //         editorRef.current.toTextArea();
 //       }
-  
+
 //       const editor = CodeMirror.fromTextArea(document.getElementById("realtimeEditor"), {
 //         mode: language,
 //         theme: "dracula",
@@ -297,38 +296,37 @@
 //         lineNumbers: true,
 //         gutters: ["CodeMirror-lint-markers"],
 //       });
-  
+
 //       editorRef.current = editor;
-  
+
 //       // 🔹 Listen for the latest code from the server
 //       socketRef.current.on("loadCode", (existingCode) => {
 //         if (existingCode) {
 //           editor.setValue(existingCode);
 //         }
 //       });
-  
+
 //       // 🔹 Listen for real-time code updates
 //       socketRef.current.on("updateCode", (newCode) => {
 //         if (newCode !== editorRef.current.getValue()) {
 //           editorRef.current.setValue(newCode);
 //         }
 //       });
-  
+
 //       // 🔹 Send changes to the server
 //       editor.on("change", (instance, changes) => {
 //         const { origin } = changes;
 //         const code = instance.getValue();
-  
+
 //         if (origin !== "setValue") {
 //           socketRef.current.emit("codeChange", { roomId, code, language });
 //         }
 //       });
 //     };
-  
+
 //     loadCodeMirror();
 //     return () => socketRef.current?.disconnect();
 //   }, [roomId, language, mounted]);
-  
 
 //   const handleLanguageChange = (e) => {
 //     const newLang = e.target.value;
@@ -390,9 +388,6 @@
 //   );
 // }
 
-
-
-
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -400,7 +395,9 @@ import dynamic from "next/dynamic";
 import { io } from "socket.io-client";
 import { useRouter } from "next/navigation";
 // Dynamically import Monaco Editor to avoid SSR errors
-const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
+const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+});
 
 // Boilerplate code for each language
 const boilerplates = {
@@ -426,10 +423,10 @@ function checkSyntax(code, language) {
       if (
         trimmed === "" ||
         /^[{}]/.test(trimmed) ||
-        /^\s*\/\//.test(trimmed) ||  // Single-line comments
-        /^\s*\/\*/.test(trimmed) ||  // Start of multi-line comments
-        /^\s*\*/.test(trimmed) ||    // Continuation of multi-line comments
-        /^\s*\#/.test(trimmed)       // Preprocessor directives (for C/C++)
+        /^\s*\/\//.test(trimmed) || // Single-line comments
+        /^\s*\/\*/.test(trimmed) || // Start of multi-line comments
+        /^\s*\*/.test(trimmed) || // Continuation of multi-line comments
+        /^\s*\#/.test(trimmed) // Preprocessor directives (for C/C++)
       ) {
         return;
       }
@@ -439,8 +436,8 @@ function checkSyntax(code, language) {
         !trimmed.endsWith(";") &&
         !trimmed.endsWith("{") &&
         !trimmed.endsWith("}") &&
-        !/^(if|for|while|switch|do)\b/.test(trimmed) &&  // Control statements
-        !/^\s*else\b/.test(trimmed);                     // "else" without braces
+        !/^(if|for|while|switch|do)\b/.test(trimmed) && // Control statements
+        !/^\s*else\b/.test(trimmed); // "else" without braces
 
       if (shouldEndWithSemicolon) {
         diagnostics.push({
@@ -471,7 +468,9 @@ export default function Editor({ roomId }) {
   const [username, setUsername] = useState(null);
   const editorRef = useRef(null);
   const [output, setOutput] = useState("");
-const [error, setError] = useState("");
+  const [error, setError] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // useEffect(() => {
   //   const token = localStorage.getItem("token");
@@ -547,13 +546,13 @@ const [error, setError] = useState("");
   // };
   // const handleSaveCode = async () => {
   //   const token = localStorage.getItem("token");
-  
+
   //   if (!token) {
   //     alert("You need to log in to save your code.");
   //     router.push("/login");
   //     return;
   //   }
-  
+
   //   try {
   //     const response = await fetch("/api/saveCode", {
   //       method: "POST",
@@ -567,9 +566,9 @@ const [error, setError] = useState("");
   //         code,
   //       }),
   //     });
-  
+
   //     const data = await response.json();
-  
+
   //     if (response.ok) {
   //       alert("✅ Code saved successfully!");
   //     } else {
@@ -609,11 +608,11 @@ const [error, setError] = useState("");
 
   //   socketRef.current.on("updateCode", ({ code: newCode, language: newLang }) => {
   //     console.log("📩 Received code update:", newCode);
-      
+
   //     if (editorRef.current && editorRef.current.getValue() !== newCode) {
   //       editorRef.current.setValue(newCode);
   //     }
-      
+
   //     setCodeStorage((prev) => ({ ...prev, [newLang]: newCode }));
   //   });
 
@@ -646,22 +645,23 @@ const [error, setError] = useState("");
       }
     });
 
-    socketRef.current.on("updateCode", ({ code: newCode, language: newLang }) => {
-      console.log("📩 Received code update:", newCode);
-    
-      // ✅ Prevent infinite loop by checking if the code is already set
-      if (editorRef.current && editorRef.current.getValue() !== newCode) {
-        editorRef.current.setValue(newCode);
-        setCode(newCode);
-        setCodeStorage((prev) => ({ ...prev, [newLang]: newCode }));
+    socketRef.current.on(
+      "updateCode",
+      ({ code: newCode, language: newLang }) => {
+        console.log("📩 Received code update:", newCode);
+
+        // ✅ Prevent infinite loop by checking if the code is already set
+        if (editorRef.current && editorRef.current.getValue() !== newCode) {
+          editorRef.current.setValue(newCode);
+          setCode(newCode);
+          setCodeStorage((prev) => ({ ...prev, [newLang]: newCode }));
+        }
       }
-    });
+    );
     socketRef.current.on("outputUpdate", ({ output, error }) => {
       setOutput(output);
       setError(error);
     });
-    
-    
 
     return () => {
       console.log("❌ Disconnecting WebSocket...");
@@ -682,7 +682,7 @@ const [error, setError] = useState("");
     console.log("✏️ Emitting code change...");
     socketRef.current.emit("codeChange", { roomId, code: value, language });
   };
-const handleFontSizeChange = (e) => {
+  const handleFontSizeChange = (e) => {
     setFontSize(e.target.value);
   };
 
@@ -690,14 +690,15 @@ const handleFontSizeChange = (e) => {
     setFontFamily(e.target.value);
   };
   const handleSaveCode = async () => {
+    setIsSaving(true);
     const token = localStorage.getItem("token");
-  
+
     if (!token) {
       alert("You need to log in to save your code.");
       router.push("/login");
       return;
     }
-  
+
     try {
       const response = await fetch("/api/saveCode", {
         method: "POST",
@@ -711,21 +712,26 @@ const handleFontSizeChange = (e) => {
           code,
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (data.stderr) {
         setError(data.stderr);
         setOutput("");
       } else {
         setOutput(data.stdout || "No output");
+        alert("Code Saved!")
         setError("");
       }
+
+      setIsSaving(false);
     } catch (err) {
       setError(err.message);
       setOutput("");
     }
-  };const handleRunCode = async () => {
+  };
+  const handleRunCode = async () => {
+    setIsRunning(true);
     const langMap = {
       cpp: 54,
       c: 50,
@@ -733,56 +739,76 @@ const handleFontSizeChange = (e) => {
       python: 71,
       javascript: 63,
     };
-  
+
     const languageId = langMap[language];
-  
+
     try {
-      const response = await fetch("https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-RapidAPI-Key": "ac5f0d4a15mshfe07a6090e0e4bap13515cjsn4950c722e229",
-          "X-RapidAPI-Host": "judge029.p.rapidapi.com"
-        },
-        body: JSON.stringify({
-          source_code: code,
-          language_id: languageId
-        })
-      });
-  
+      const response = await fetch(
+        "https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-RapidAPI-Key":
+              "ac5f0d4a15mshfe07a6090e0e4bap13515cjsn4950c722e229",
+            "X-RapidAPI-Host": "judge029.p.rapidapi.com",
+          },
+          body: JSON.stringify({
+            source_code: code,
+            language_id: languageId,
+          }),
+        }
+      );
+
       const data = await response.json();
-  
+
       if (data.stderr) {
         const errorText = data.stderr;
         setError(errorText);
         setOutput("");
-        socketRef.current.emit("outputUpdate", { roomId, output: "", error: errorText });
+        socketRef.current.emit("outputUpdate", {
+          roomId,
+          output: "",
+          error: errorText,
+        });
       } else {
         const outputText = data.stdout || data.message || "✅ No output";
         setOutput(outputText);
         setError("");
-        socketRef.current.emit("outputUpdate", { roomId, output: outputText, error: "" });
+        socketRef.current.emit("outputUpdate", {
+          roomId,
+          output: outputText,
+          error: "",
+        });
       }
-  
+
+      setIsRunning(false);
     } catch (error) {
       console.error("Execution Error:", error);
       setError(error.message);
       setOutput("");
-      socketRef.current.emit("outputUpdate", { roomId, output: "", error: error.message });
+      socketRef.current.emit("outputUpdate", {
+        roomId,
+        output: "",
+        error: error.message,
+      });
     }
   };
-  
-  
+
   // Handle language change
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setLanguage(newLang);
     const existingCode = codeStorage[newLang] || boilerplates[newLang];
-    
+
     setCode(existingCode);
-    
+
     console.log("🔄 Changing language, emitting update...");
-    socketRef.current.emit("codeChange", { roomId, code: existingCode, language: newLang });
+    socketRef.current.emit("codeChange", {
+      roomId,
+      code: existingCode,
+      language: newLang,
+    });
   };
 
   // Handle user logout
@@ -792,10 +818,10 @@ const handleFontSizeChange = (e) => {
     setUsername(null);
     router.push("/");
   };
-  
+
   return (
-    <div className="flex flex-col items-left bg-gray-900 p-6 rounded-lg shadow-lg">
-       <div className="absolute top-4 right-4 flex items-center space-x-4">
+    <div className="flex flex-col items-left max-h-screen bg-gray-900 p-6 rounded-lg shadow-lg">
+      <div className="absolute top-4 right-4 flex items-center space-x-4">
         {username ? (
           <>
             <span className="text-white">👤 {username}</span>
@@ -814,7 +840,6 @@ const handleFontSizeChange = (e) => {
           </>
         ) : (
           <>
-          
             <button
               onClick={() => router.push("/login")}
               className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700"
@@ -831,11 +856,11 @@ const handleFontSizeChange = (e) => {
         )}
       </div>
       <div className="flex space-x-4 mb-4">
-      <button
+        <button
           onClick={handleSaveCode}
           className="bg-yellow-500 px-4 py-2 rounded text-white hover:bg-yellow-600"
         >
-          Save Code
+          {isSaving? "Saving.." : "Save Code"}
         </button>
         <select
           value={language}
@@ -849,11 +874,11 @@ const handleFontSizeChange = (e) => {
           <option value="cpp">C++</option>
         </select>
         <button
-  onClick={handleRunCode}
-  className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700"
->
-  ▶️ Run
-</button>
+          onClick={handleRunCode}
+          className="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-700"
+        >
+          {isRunning? "Running Code..." : "▶️ Run"}
+        </button>
 
         <select
           value={fontFamily}
@@ -873,8 +898,7 @@ const handleFontSizeChange = (e) => {
           max="30"
         />
       </div>
-
-      <div style={{ height: "600px", width: "100%" }}>
+      <div style={{ height: "500px", width: "100%" }}>
         <MonacoEditor
           height="100%"
           language={language}
@@ -893,17 +917,16 @@ const handleFontSizeChange = (e) => {
         />
       </div>
       {/* Output Panel */}
-<div className="mt-4 w-full bg-black text-white p-4 rounded max-h-64 overflow-y-auto">
-  <h3 className="text-green-400 font-semibold mb-2">▶️ Output:</h3>
-  {output && <pre className="text-green-300">{output}</pre>}
-  {error && (
-    <div className="text-red-400">
-      <strong>Error:</strong>
-      <pre>{error}</pre>
-    </div>
-  )}
-</div>
-
+      <div className="mt-4 w-full bg-black text-white p-4 rounded max-h-64 overflow-y-auto">
+        <h3 className="text-green-400 font-semibold mb-2">▶️ Output:</h3>
+        {output && <pre className="text-green-300">{output}</pre>}
+        {error && (
+          <div className="text-red-400">
+            <strong>Error:</strong>
+            <pre>{error}</pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
