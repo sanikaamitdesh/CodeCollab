@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }) {
           <Link href="/dashboard" className="bg-gray-700 p-2 rounded">Dashboard</Link>
           <Link href="/create-room" className="bg-gray-700 p-2 rounded">Create Room</Link>
           <Link href="/join-room" className="bg-gray-700 p-2 rounded">Join Room</Link>
-          <button onClick={handleLogout} className="bg-red-600 p-2 mt-4 rounded">Logout</button>
+          <button onClick={handleLogout} className="bg-red-600 p-2 mt-4 cursor-pointer rounded">Logout</button>
         </nav>
       </aside>
 

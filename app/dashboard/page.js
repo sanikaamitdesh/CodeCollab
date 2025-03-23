@@ -111,14 +111,14 @@ export default function Dashboard() {
               </p>
               <div className="flex items-center justify-center gap-3">
                   <button 
-                  className="bg-green-600 px-3 py-1 rounded text-white hover:bg-green-700"
+                  className="bg-green-600 px-3 py-1 rounded text-white cursor-pointer hover:bg-green-700"
                   onClick={() => handleJoinRoom(room.roomId)}
                   >
                     Join Room
                   </button>
                 <button
                   onClick={() => handleLeaveRoom(room.roomId)}
-                  className="bg-red-600 px-3 py-1 rounded text-white hover:bg-red-700"
+                  className="bg-red-600 px-3 py-1 rounded text-white cursor-pointer hover:bg-red-700"
                 >
                   Leave Room
                 </button>

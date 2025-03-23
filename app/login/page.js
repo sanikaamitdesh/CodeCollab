@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -42,12 +43,12 @@ export default function Login() {
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required 
           />
-          <button type="submit" className="bg-blue-600 p-3 rounded text-white font-semibold hover:bg-blue-700 transition">
+          <button type="submit" className="bg-blue-600 p-3 rounded text-white font-semibold cursor-pointer hover:bg-blue-700 transition">
             Login
           </button>
         </form>
         <p className="mt-4 text-center text-gray-400">
-          Dont have an account? <a href="/signup" className="text-blue-400 hover:underline">Sign Up</a>
+          Dont have an account? <Link href="/signup" className="text-blue-400 hover:underline">Sign Up</Link>
         </p>
       </div>
     </div>
