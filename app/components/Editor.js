@@ -655,7 +655,7 @@ import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import io from "socket.io-client";
 import axios from "axios";
-
+import { useRouter } from "next/navigation";
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
@@ -676,15 +676,24 @@ const langMap = {
   javascript: 63,
 };
 
+
 const Editor = ({ roomId }) => {
+  const router = useRouter();
   const [files, setFiles] = useState([]);
   const [activeFile, setActiveFile] = useState(0);
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [socket, setSocket] = useState(null);
   const socketRef = useRef(null);
-
+  const [username, setUsername] = useState(null);
+  // const [username, setUsername] = useState(null);
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedUsername = localStorage.getItem("username");
+
+    if (token && storedUsername) {
+      setUsername(storedUsername);
+    }
     const newSocket = io("http://localhost:4000");
     setSocket(newSocket);
     socketRef.current = newSocket;
@@ -713,19 +722,30 @@ const Editor = ({ roomId }) => {
     };
   }, [roomId]);
   const saveAllFiles = async () => {
-        try {
-          const response = await axios.post("/api/saveCode", {
-            roomId,
-            files,
-          });
-          alert("✅ All files saved successfully!");
-        } catch (error) {
-          console.error("❌ Error saving files:", error);
-          alert("❌ Failed to save files!");
-        }
-      };
+    if (!username) {
+      alert("❌ Please login to save your code.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post("/api/saveCode", {
+        roomId,
+        files,
+      });
+      alert("✅ All files saved successfully!");
+    } catch (error) {
+      console.error("❌ Error saving files:", error);
+      alert("❌ Failed to save files!");
+    }
+  };
+  
     
-
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setUsername(null);
+    router.push("/");
+  };
   const handleEditorChange = (value) => {
     const updatedFiles = [...files];
     updatedFiles[activeFile].content = value;
@@ -851,6 +871,77 @@ const Editor = ({ roomId }) => {
 
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "Arial, sans-serif" }}>
+       <div style={{
+  position: "absolute",
+  top: "10px",
+  right: "20px",
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  zIndex: 1000 // ensures it's not hidden behind other content
+}}>
+  {username ? (
+    <>
+      <span style={{ color: "white" }}>👤 {username}</span>
+      <button
+        onClick={() => router.push("/dashboard")}
+        style={{
+          backgroundColor: "#4CAF50",
+          color: "white",
+          padding: "8px 12px",
+          borderRadius: "5px",
+          border: "none",
+          cursor: "pointer"
+        }}
+      >
+        Dashboard
+      </button>
+      <button
+        onClick={handleLogout}
+        style={{
+          backgroundColor: "#f44336",
+          color: "white",
+          padding: "8px 12px",
+          borderRadius: "5px",
+          border: "none",
+          cursor: "pointer"
+        }}
+      >
+        Logout
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        onClick={() => router.push("/login")}
+        style={{
+          backgroundColor: "#2196F3",
+          color: "white",
+          padding: "8px 12px",
+          borderRadius: "5px",
+          border: "none",
+          cursor: "pointer"
+        }}
+      >
+        Login
+      </button>
+      <button
+        onClick={() => router.push("/signup")}
+        style={{
+          backgroundColor: "#4CAF50",
+          color: "white",
+          padding: "8px 12px",
+          borderRadius: "5px",
+          border: "none",
+          cursor: "pointer"
+        }}
+      >
+        Signup
+      </button>
+    </>
+  )}
+</div>
+
       {/* Sidebar for Files */}
       <div style={{ 
         width: "250px", 
@@ -912,19 +1003,23 @@ const Editor = ({ roomId }) => {
         >
           Run Code
         </button>
-        <button 
-        onClick={saveAllFiles} style={{ 
-          margin: "5px 5px",
-          padding: "8px",
-          background: "#f9a825",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          fontSize: "0.9rem",
-          cursor: "pointer"
-        }}>
-           Save Files
-        </button>
+       
+  <button 
+    onClick={saveAllFiles} 
+    style={{ 
+      margin: "5px 5px",
+      padding: "8px",
+      background: "#f9a825",
+      color: "white",
+      border: "none",
+      borderRadius: "4px",
+      fontSize: "0.9rem",
+      cursor: "pointer"
+    }}>
+    Save Files
+  </button>
+
+
       </div>
   
       {/* Code Editor and Output */}
