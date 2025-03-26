@@ -9,43 +9,43 @@ export default function ChatRoom({ roomId, username }) {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
- 
-    socketRef.current = io("http://localhost:4000");
+    if (!socketRef.current) {
+      socketRef.current = io("http://localhost:4000"); // ✅ Create socket only once
+    }
+
+    const socket = socketRef.current;
     
+    socket.emit("joinRoom", roomId);
+    console.log(`✅ Connected to Room: ${roomId} as ${username}`);
 
-    socketRef.current.emit("joinRoom", { roomId, username });
-    console.log(`Connected to Room: ${roomId} as ${username}`);
-
-    socketRef.current.on("loadMessages", (existingMessages) => {
-      setMessages(existingMessages);
+    // Notify others when a user joins
+    socket.emit("sendMessage", {
+      roomId,
+      message: `${username} has joined the room.`,
+      username: "System",
     });
 
-    
-    socketRef.current.on("receiveMessage", (newMessage) => {
-      console.log("Received new message:", newMessage);
+    socket.on("receiveMessage", (newMessage) => {
+      console.log("📩 Received new message:", newMessage);
       setMessages((prev) => [...prev, newMessage]);
     });
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.emit("sendMessage", {
-          roomId,
-          message: `${username} has left the room.`,
-          username: "System",
-        });
-        socketRef.current.disconnect();
-      }
+      // Notify others when user leaves
+      socket.emit("sendMessage", {
+        roomId,
+        message: `${username} has left the room.`,
+        username: "System",
+      });
+      socket.disconnect();
+      socketRef.current = null; // ✅ Ensure it resets
     };
   }, [roomId, username]);
 
   const sendMessage = () => {
-    if (message.trim()) {
-      if (socketRef.current) {
-        socketRef.current.emit("sendMessage", { roomId, message, username });
-        console.log(`Message sent: "${message}" by ${username}`);
-      } else {
-        console.warn("Socket is not connected!");
-      }
+    if (message.trim() && socketRef.current) {
+      socketRef.current.emit("sendMessage", { roomId, message, username });
+      console.log(`📤 Message sent: "${message}" by ${username}`);
       setMessage("");
     }
   };
@@ -77,4 +77,3 @@ export default function ChatRoom({ roomId, username }) {
     </div>
   );
 }
-
