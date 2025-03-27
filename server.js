@@ -600,7 +600,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     // origin: "https://code-collab-black.vercel.app/",
-    origin:"https://code-collab-git-deploybackend-7a28a2-sanika-deshpandes-projects.vercel.app/",
+    origin:"*",
     methods: ["GET", "POST"],
   },
 });
