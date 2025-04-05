@@ -656,9 +656,14 @@ import dynamic from "next/dynamic";
 import io from "socket.io-client";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { NewFileModal } from "@/components/newFilemodal";
+
+
+
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
+
 
 const languageBoilerplates = {
   javascript: "console.log('Hello, World!');",
@@ -686,6 +691,8 @@ const Editor = ({ roomId }) => {
   const [socket, setSocket] = useState(null);
   const socketRef = useRef(null);
   const [username, setUsername] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // const [username, setUsername] = useState(null);
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -760,30 +767,53 @@ const Editor = ({ roomId }) => {
     }
   };
 
-  const addNewFile = () => {
-    const fileName = prompt("Enter file name (e.g., script.js):");
-    if (!fileName) return;
+  // const addNewFile = () => {
+  //   const fileName = prompt("Enter file name (e.g., script.js):");
+  //   if (!fileName) return;
 
-    const language = prompt("Enter language (javascript, python, c, cpp, java):");
+  //   const language = prompt("Enter language (javascript, python, c, cpp, java):");
+  //   if (!languageBoilerplates[language]) {
+  //     alert("Unsupported language!");
+  //     return;
+  //   }
+
+  //   const newFile = {
+  //     name: fileName,
+  //     language: language,
+  //     content: languageBoilerplates[language],
+  //   };
+
+  //   const updatedFiles = [...files, newFile];
+  //   setFiles(updatedFiles);
+  //   setActiveFile(updatedFiles.length - 1);
+
+  //   if (socket) {
+  //     socket.emit("filesUpdate", { roomId, files: updatedFiles });
+  //   }
+  // };
+
+
+  const handleCreateFile = ({ name, language }) => {
     if (!languageBoilerplates[language]) {
       alert("Unsupported language!");
       return;
     }
-
+  
     const newFile = {
-      name: fileName,
-      language: language,
+      name,
+      language,
       content: languageBoilerplates[language],
     };
-
+  
     const updatedFiles = [...files, newFile];
     setFiles(updatedFiles);
     setActiveFile(updatedFiles.length - 1);
-
+  
     if (socket) {
       socket.emit("filesUpdate", { roomId, files: updatedFiles });
     }
   };
+  
 
   const handleRunCode = async () => {
     const language = files[activeFile].language;
@@ -974,7 +1004,8 @@ const Editor = ({ roomId }) => {
           </button>
         ))}
         <button 
-          onClick={addNewFile} 
+          // onClick={addNewFile} 
+          onClick={() => setIsModalOpen(true)} 
           style={{ 
             margin: "5px 0",
             padding: "8px",
@@ -988,6 +1019,11 @@ const Editor = ({ roomId }) => {
         >
           + New File
         </button>
+        <NewFileModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onCreate={handleCreateFile}
+        />
         <button 
           onClick={handleRunCode} 
           style={{ 
