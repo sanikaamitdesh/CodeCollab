@@ -735,16 +735,30 @@ const Editor = ({ roomId }) => {
     }
   
     try {
+      // Save to server
       const response = await axios.post("/api/saveCode", {
         roomId,
         files,
       });
       alert("✅ All files saved successfully!");
+  
+      // Also download each file
+      files.forEach(file => {
+        const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+  
     } catch (error) {
       console.error("❌ Error saving files:", error);
       alert("❌ Failed to save files!");
     }
   };
+  
   
     
   const handleLogout = () => {
@@ -1052,7 +1066,7 @@ const Editor = ({ roomId }) => {
       fontSize: "0.9rem",
       cursor: "pointer"
     }}>
-    Save Files
+    Save and Download Files
   </button>
 
 
