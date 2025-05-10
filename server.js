@@ -605,13 +605,45 @@ app.use(cors({
 app.use(express.json());
 
 // ✅ Define HTTP API routes BEFORE socket logic
-app.post("/api/auth", (req, res) => {
+// In server.js
+
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+// Your existing User schema:
+const User = require("./models/User"); // Make sure path is correct
+
+// Your MongoDB connection logic:
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB error", err));
+
+// Replace your old /api/auth with this:
+app.post("/api/auth", async (req, res) => {
   const { username, email, password } = req.body;
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: "Missing required fields" });
+  try {
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ username, email, password: hashedPassword });
+
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    return res.status(201).json({ message: "Signup successful", user: newUser, token });
+  } catch (error) {
+    console.error("Signup error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-  console.log(`✅ New signup: ${username}, ${email}`);
-  return res.status(200).json({ message: "Signup successful!" });
 });
 
 // ✅ Create Socket.IO instance AFTER routes
