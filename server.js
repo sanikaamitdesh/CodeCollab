@@ -608,7 +608,11 @@ app.use(cors({
   credentials: true,
 }));
 
-const CLIENT_ORIGIN = process.env.NEXT_PUBLIC_BACKEND_URL|| "http://localhost:3000";
+const CLIENT_ORIGIN = [
+  "https://cool-bublanina-c947a8.netlify.app",
+  "http://localhost:3000"
+];
+
 const io = new Server(server, {
   cors: {
     // origin: "https://code-collab-black.vercel.app/",
