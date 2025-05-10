@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-
-const socket = io("http://localhost:4000");
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL||"http://localhost:4000";
+const socket = io(BACKEND_URL);
 
 export default function ChatRoom({ roomId, username }) {
   const socketRef = useRef(null);
@@ -10,7 +10,7 @@ export default function ChatRoom({ roomId, username }) {
 
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = io("http://localhost:4000"); // ✅ Create socket only once
+      socketRef.current = io(BACKEND_URL); // ✅ Create socket only once
     }
 
     const socket = socketRef.current;

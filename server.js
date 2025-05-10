@@ -597,10 +597,11 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
+const CLIENT_ORIGIN = process.env.NEXT_PUBLIC_BACKEND_URL|| "http://localhost:3000";
 const io = new Server(server, {
   cors: {
     // origin: "https://code-collab-black.vercel.app/",
-    origin:"http://localhost:3000",
+    origin:CLIENT_ORIGIN,
     methods: ["GET", "POST"],
   },
 });
