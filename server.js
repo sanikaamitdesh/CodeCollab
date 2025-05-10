@@ -598,29 +598,30 @@ const cors = require("cors");
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "https://cool-bublanina-c947a8.netlify.app",  // your Netlify URL
-  "http://localhost:3000",                      // local dev
+  "https://cool-bublanina-c947a8.netlify.app",
+  "http://localhost:3000",
 ];
 
+// ✅ Apply middleware BEFORE any routes or socket logic
 app.use(cors({
   origin: allowedOrigins,
   methods: ["GET", "POST", "OPTIONS"],
   credentials: true,
 }));
+app.use(express.json()); // for parsing JSON bodies
 
-const CLIENT_ORIGIN = [
-  "https://cool-bublanina-c947a8.netlify.app",
-  "http://localhost:3000"
-];
+// ✅ Handle /api/auth BEFORE socket.io
+app.post("/api/auth", (req, res) => {
+  const { username, email, password } = req.body;
 
-const io = new Server(server, {
-  cors: {
-    // origin: "https://code-collab-black.vercel.app/",
-    origin:CLIENT_ORIGIN,
-    methods: ["GET", "POST"],
-  },
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  console.log(`✅ New signup: ${username}, ${email}`);
+  return res.status(200).json({ message: "Signup successful!" });
 });
-app.use(express.json());
+
 const rooms = {};
 
 io.on("connection", (socket) => {
@@ -704,18 +705,18 @@ io.on("connection", (socket) => {
     console.log("❌ Client disconnected:", socket.id);
   });
 });
-app.post("/api/auth", (req, res) => {
-  const { username, email, password } = req.body;
+// app.post("/api/auth", (req, res) => {
+//   const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
+//   if (!username || !email || !password) {
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
 
-  // Simulate saving the user (you can add DB later)
-  console.log(`✅ New signup: ${username}, ${email}`);
+//   // Simulate saving the user (you can add DB later)
+//   console.log(`✅ New signup: ${username}, ${email}`);
   
-  return res.status(200).json({ message: "Signup successful!" });
-});
+//   return res.status(200).json({ message: "Signup successful!" });
+// });
 const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
