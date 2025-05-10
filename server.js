@@ -583,142 +583,86 @@
 
 
 
-
-
-
-
-
-
-
 const express = require("express");
 const http = require("http");
-const { Server } = require("socket.io");
-// const cors = require("cors");
 const cors = require("cors");
+const { Server } = require("socket.io");
+
 const app = express();
 const server = http.createServer(app);
+
+// ✅ Apply CORS + JSON parser middleware before any route or socket logic
 const allowedOrigins = [
   "https://cool-bublanina-c947a8.netlify.app",
   "http://localhost:3000",
 ];
 
-// ✅ Apply middleware BEFORE any routes or socket logic
 app.use(cors({
   origin: allowedOrigins,
   methods: ["GET", "POST", "OPTIONS"],
   credentials: true,
 }));
-app.use(express.json()); // for parsing JSON bodies
+app.use(express.json());
 
-// ✅ Handle /api/auth BEFORE socket.io
+// ✅ Define HTTP API routes BEFORE socket logic
 app.post("/api/auth", (req, res) => {
   const { username, email, password } = req.body;
-
   if (!username || !email || !password) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-
   console.log(`✅ New signup: ${username}, ${email}`);
   return res.status(200).json({ message: "Signup successful!" });
 });
 
+// ✅ Create Socket.IO instance AFTER routes
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// ✅ Socket.IO handlers
 const rooms = {};
 
 io.on("connection", (socket) => {
   console.log("⚡ New client connected:", socket.id);
 
-  // Join room
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
-    console.log(`📝 User joined room: ${roomId}`);
-
-    if (!rooms[roomId]) {
-      rooms[roomId] = [];
-    }
-
-    // Send the current file list to the newly joined user
+    if (!rooms[roomId]) rooms[roomId] = [];
     socket.emit("filesUpdate", rooms[roomId]);
   });
 
-  // Update file list
   socket.on("filesUpdate", ({ roomId, files }) => {
     rooms[roomId] = files;
     io.to(roomId).emit("filesUpdate", files);
   });
 
-  // Code change handling
   socket.on("codeChange", ({ roomId, fileName, code }) => {
-    const roomFiles = rooms[roomId] || [];
-    const fileIndex = roomFiles.findIndex((file) => file.name === fileName);
-
+    const fileIndex = (rooms[roomId] || []).findIndex(f => f.name === fileName);
     if (fileIndex !== -1) {
       rooms[roomId][fileIndex].content = code;
       socket.to(roomId).emit("codeChange", { fileName, code });
     }
   });
 
-  // Chat message handling
   socket.on("sendMessage", ({ roomId, message, username }) => {
-    console.log(`💬 Received message from ${username} for Room ${roomId}:`, message);
-
-    if (!rooms[roomId]) {
-      rooms[roomId] = { messages: [] };
-    }
-
-    if (!Array.isArray(rooms[roomId].messages)) {
-      rooms[roomId].messages = [];
-    }
-
-    const newMessage = { username, message };
-    rooms[roomId].messages.push(newMessage);
-    io.to(roomId).emit("receiveMessage", newMessage);
+    if (!rooms[roomId]) rooms[roomId] = { messages: [] };
+    if (!Array.isArray(rooms[roomId].messages)) rooms[roomId].messages = [];
+    const msg = { username, message };
+    rooms[roomId].messages.push(msg);
+    io.to(roomId).emit("receiveMessage", msg);
   });
 
-  // Video chat signaling
-  socket.on("join-video", ({ roomId, userId }) => {
-    console.log(`📹 User ${userId} joined video in room ${roomId}`);
-    io.to(roomId).emit("user-joined-video", { peerId: userId });
-  });
-
-  socket.on("video-offer", ({ roomId, target, caller, sdp }) => {
-    console.log(`📡 Sending video offer from ${caller} to ${target}`);
-    io.to(target).emit("video-offer", { caller, sdp });
-  });
-
-  socket.on("video-answer", ({ roomId, target, caller, sdp }) => {
-    console.log(`✅ Sending video answer from ${caller} to ${target}`);
-    io.to(target).emit("video-answer", { caller, sdp });
-  });
-
-  socket.on("ice-candidate", ({ roomId, target, from, candidate }) => {
-    console.log(`❄️ Sending ICE candidate from ${from} to ${target}`);
-    io.to(target).emit("ice-candidate", { from, candidate });
-  });
-
-  socket.on("leave-video", ({ roomId, userId }) => {
-    console.log(`🚪 User ${userId} left video chat in room ${roomId}`);
-    io.to(roomId).emit("user-left-video", { peerId: userId });
-  });
-
-  // Disconnect handling
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });
 });
-// app.post("/api/auth", (req, res) => {
-//   const { username, email, password } = req.body;
 
-//   if (!username || !email || !password) {
-//     return res.status(400).json({ error: "Missing required fields" });
-//   }
-
-//   // Simulate saving the user (you can add DB later)
-//   console.log(`✅ New signup: ${username}, ${email}`);
-  
-//   return res.status(200).json({ message: "Signup successful!" });
-// });
+// ✅ Start server
 const PORT = process.env.PORT || 4000;
-
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
