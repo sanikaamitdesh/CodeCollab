@@ -594,9 +594,20 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 // const cors = require("cors");
-
+const cors = require("cors");
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+  "https://cool-bublanina-c947a8.netlify.app",  // your Netlify URL
+  "http://localhost:3000",                      // local dev
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: true,
+}));
+
 const CLIENT_ORIGIN = process.env.NEXT_PUBLIC_BACKEND_URL|| "http://localhost:3000";
 const io = new Server(server, {
   cors: {
