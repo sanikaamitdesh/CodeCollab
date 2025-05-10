@@ -610,18 +610,7 @@ const rooms = {};
 
 io.on("connection", (socket) => {
   console.log("⚡ New client connected:", socket.id);
-  app.post("/api/auth", (req, res) => {
-    const { username, email, password } = req.body;
-  
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-  
-    // Simulate saving the user (you can add DB later)
-    console.log(`✅ New signup: ${username}, ${email}`);
-    
-    return res.status(200).json({ message: "Signup successful!" });
-  });
+
   // Join room
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
@@ -699,6 +688,18 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });
+});
+app.post("/api/auth", (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  // Simulate saving the user (you can add DB later)
+  console.log(`✅ New signup: ${username}, ${email}`);
+  
+  return res.status(200).json({ message: "Signup successful!" });
 });
 const PORT = process.env.PORT || 4000;
 
