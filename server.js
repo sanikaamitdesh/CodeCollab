@@ -616,7 +616,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
+app.use(express.json());
 const rooms = {};
 
 io.on("connection", (socket) => {
