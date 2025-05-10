@@ -1,11 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
-// module.exports = {
-//     experimental: { appDir: true },
-//   };
-module.exports = {
-    output: 'export',
-    images: { unoptimized: true }, // optional: if you're using Next.js images
+const nextConfig = {
+    
+    images: { unoptimized: true }, // if using <Image> from next/image
   };
   
-export default nextConfig;
+  export default nextConfig;
+  
