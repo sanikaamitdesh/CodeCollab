@@ -596,6 +596,12 @@ const allowedOrigins = [
   "https://cool-bublanina-c947a8.netlify.app",
   "http://localhost:3000",
 ];
+// Fix CORS preflight by explicitly handling OPTIONS
+app.options("*", cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: true,
+}));
 
 app.use(cors({
   origin: allowedOrigins,
