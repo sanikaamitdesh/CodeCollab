@@ -776,7 +776,8 @@ const Editor = ({ roomId }) => {
       socket.emit("codeChange", {
         roomId,
         fileName: files[activeFile].name,
-        code: value,
+        code: value
+        // username: username
       });
     }
   };

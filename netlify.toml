@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://codecollab-1-my16.onrender.com/api/:splat"
+  status = 200
