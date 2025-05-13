@@ -692,7 +692,7 @@ const Editor = ({ roomId }) => {
   const socketRef = useRef(null);
   const [username, setUsername] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const BACKEND_URL = process.env.ALLOWED_ORIGINS||"http://localhost:4000";
+  const BACKEND_URL = "https://codecollab-2-u456.onrender.com";
   // const [username, setUsername] = useState(null);
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -701,7 +701,11 @@ const Editor = ({ roomId }) => {
     if (token && storedUsername) {
       setUsername(storedUsername);
     }
-    const newSocket = io(BACKEND_URL);
+    const newSocket = io(BACKEND_URL, {
+      transports: ["websocket"],
+      withCredentials: true,
+    });
+    
     setSocket(newSocket);
     socketRef.current = newSocket;
 
