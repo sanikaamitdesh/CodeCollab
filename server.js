@@ -654,82 +654,75 @@
 
 // ✅ Create Socket.IO instance AFTER routes
 // server.js
-import express from 'express';
-import { createServer } from 'http';
-import { Server as SocketServer } from 'socket.io';
-import next from 'next';
-import dotenv from 'dotenv';
-import cors from 'cors';
+// server.js
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import next from "next";
+import dotenv from "dotenv";
+import cors from "cors";
 
 dotenv.config();
 
-const dev = process.env.NODE_ENV !== 'production';
+const dev = process.env.NODE_ENV !== "production";
 const nextApp = next({ dev });
 const handle = nextApp.getRequestHandler();
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+
+const allowedOrigins = ["https://codecollab-2-u456.onrender.com", "http://localhost:3000"];
 
 nextApp.prepare().then(() => {
   const app = express();
   const server = createServer(app);
-
-  // Apply middlewares
-  app.use(cors({ origin: allowedOrigins, credentials: true }));
-  app.use(express.json());
-
-  // Example custom Express route (optional)
-  app.get('/api/health', (req, res) => res.send('Server is healthy ✅'));
-
-  // Handle Next.js routes
-  app.all('*', (req, res) => handle(req, res));
-
-  // ✅ Setup Socket.IO
-  const io = new SocketServer(server, {
+  const io = new Server(server, {
     cors: {
       origin: allowedOrigins,
-      methods: ['GET', 'POST'],
+      methods: ["GET", "POST"],
       credentials: true,
     },
   });
 
+  // 👉 Socket.IO handlers
   const rooms = {};
+  io.on("connection", (socket) => {
+    console.log("⚡ Connected:", socket.id);
 
-  io.on('connection', (socket) => {
-    console.log('⚡ New client connected:', socket.id);
-
-    socket.on('joinRoom', (roomId) => {
+    socket.on("joinRoom", (roomId) => {
       socket.join(roomId);
       if (!rooms[roomId]) rooms[roomId] = [];
-      socket.emit('filesUpdate', rooms[roomId]);
+      socket.emit("filesUpdate", rooms[roomId]);
     });
 
-    socket.on('filesUpdate', ({ roomId, files }) => {
+    socket.on("filesUpdate", ({ roomId, files }) => {
       rooms[roomId] = files;
-      io.to(roomId).emit('filesUpdate', files);
+      io.to(roomId).emit("filesUpdate", files);
     });
 
-    socket.on('codeChange', ({ roomId, fileName, code }) => {
-      const fileIndex = (rooms[roomId] || []).findIndex(f => f.name === fileName);
-      if (fileIndex !== -1) {
-        rooms[roomId][fileIndex].content = code;
-        socket.to(roomId).emit('codeChange', { fileName, code });
+    socket.on("codeChange", ({ roomId, fileName, code }) => {
+      const index = (rooms[roomId] || []).findIndex(f => f.name === fileName);
+      if (index !== -1) {
+        rooms[roomId][index].content = code;
+        socket.to(roomId).emit("codeChange", { fileName, code });
       }
     });
 
-    socket.on('sendMessage', ({ roomId, message, username }) => {
+    socket.on("sendMessage", ({ roomId, message, username }) => {
       if (!rooms[roomId]) rooms[roomId] = { messages: [] };
-      if (!Array.isArray(rooms[roomId].messages)) rooms[roomId].messages = [];
-      const msg = { username, message };
-      rooms[roomId].messages.push(msg);
-      io.to(roomId).emit('receiveMessage', msg);
+      rooms[roomId].messages.push({ username, message });
+      io.to(roomId).emit("receiveMessage", { username, message });
     });
 
-    socket.on('disconnect', () => {
-      console.log('❌ Client disconnected:', socket.id);
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected:", socket.id);
     });
+  });
+
+  // 👇 This serves all frontend requests (Next.js pages)
+  app.all("*", (req, res) => {
+    return handle(req, res);
   });
 
   const PORT = process.env.PORT || 4000;
   server.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🚀 App running on http://localhost:${PORT}`);
   });
 });
