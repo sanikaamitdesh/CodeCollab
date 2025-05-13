@@ -583,124 +583,153 @@
 
 
 
-const express = require("express");
-const http = require("http");
-const cors = require("cors");
-const { Server } = require("socket.io");
+// const express = require("express");
+// const http = require("http");
+// const cors = require("cors");
+// const { Server } = require("socket.io");
 
-const app = express();
-const server = http.createServer(app);
+// const app = express();
+// const server = http.createServer(app);
 
-// ✅ Apply CORS + JSON parser middleware before any route or socket logic
-const allowedOrigins = [
-  "https://cool-bublanina-c947a8.netlify.app",
-  "http://localhost:3000",
-];
-// Fix CORS preflight by explicitly handling OPTIONS
-app.options("*", cors({
-  origin: allowedOrigins,
-  methods: ["GET", "POST", "OPTIONS"],
-  credentials: true,
-}));
+// // ✅ Apply CORS + JSON parser middleware before any route or socket logic
+// const allowedOrigins = [
+//   "https://cool-bublanina-c947a8.netlify.app",
+//   "http://localhost:3000",
+// ];
+// // Fix CORS preflight by explicitly handling OPTIONS
+// app.options("*", cors({
+//   origin: allowedOrigins,
+//   methods: ["GET", "POST", "OPTIONS"],
+//   credentials: true,
+// }));
 
-app.use(cors({
-  origin: allowedOrigins,
-  methods: ["GET", "POST", "OPTIONS"],
-  credentials: true,
-}));
-app.use(express.json());
+// app.use(cors({
+//   origin: allowedOrigins,
+//   methods: ["GET", "POST", "OPTIONS"],
+//   credentials: true,
+// }));
+// app.use(express.json());
 
-// ✅ Define HTTP API routes BEFORE socket logic
-// In server.js
+// // ✅ Define HTTP API routes BEFORE socket logic
+// // In server.js
 
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+// const mongoose = require("mongoose");
+// const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
 
 // Your existing User schema:
-const User = require("./models/User"); // Make sure path is correct
+// const User = require("./models/User"); // Make sure path is correct
 
 // Your MongoDB connection logic:
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error", err));
+// mongoose.connect(process.env.MONGODB_URI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// }).then(() => console.log("✅ MongoDB connected"))
+//   .catch((err) => console.error("❌ MongoDB error", err));
 
-// Replace your old /api/auth with this:
-app.post("/api/auth", async (req, res) => {
-  const { username, email, password } = req.body;
-  try {
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+// // Replace your old /api/auth with this:
+// app.post("/api/auth", async (req, res) => {
+//   const { username, email, password } = req.body;
+//   try {
+//     if (!username || !email || !password) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
-    }
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ error: "User already exists" });
+//     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ username, email, password: hashedPassword });
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const newUser = await User.create({ username, email, password: hashedPassword });
 
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+//     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-    return res.status(201).json({ message: "Signup successful", user: newUser, token });
-  } catch (error) {
-    console.error("Signup error:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
+//     return res.status(201).json({ message: "Signup successful", user: newUser, token });
+//   } catch (error) {
+//     console.error("Signup error:", error);
+//     return res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 
 // ✅ Create Socket.IO instance AFTER routes
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+// server.js
+import express from 'express';
+import { createServer } from 'http';
+import { Server as SocketServer } from 'socket.io';
+import next from 'next';
+import dotenv from 'dotenv';
+import cors from 'cors';
 
-// ✅ Socket.IO handlers
-const rooms = {};
+dotenv.config();
 
-io.on("connection", (socket) => {
-  console.log("⚡ New client connected:", socket.id);
+const dev = process.env.NODE_ENV !== 'production';
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
 
-  socket.on("joinRoom", (roomId) => {
-    socket.join(roomId);
-    if (!rooms[roomId]) rooms[roomId] = [];
-    socket.emit("filesUpdate", rooms[roomId]);
+nextApp.prepare().then(() => {
+  const app = express();
+  const server = createServer(app);
+
+  // Apply middlewares
+  app.use(cors({ origin: allowedOrigins, credentials: true }));
+  app.use(express.json());
+
+  // Example custom Express route (optional)
+  app.get('/api/health', (req, res) => res.send('Server is healthy ✅'));
+
+  // Handle Next.js routes
+  app.all('*', (req, res) => handle(req, res));
+
+  // ✅ Setup Socket.IO
+  const io = new SocketServer(server, {
+    cors: {
+      origin: allowedOrigins,
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
   });
 
-  socket.on("filesUpdate", ({ roomId, files }) => {
-    rooms[roomId] = files;
-    io.to(roomId).emit("filesUpdate", files);
+  const rooms = {};
+
+  io.on('connection', (socket) => {
+    console.log('⚡ New client connected:', socket.id);
+
+    socket.on('joinRoom', (roomId) => {
+      socket.join(roomId);
+      if (!rooms[roomId]) rooms[roomId] = [];
+      socket.emit('filesUpdate', rooms[roomId]);
+    });
+
+    socket.on('filesUpdate', ({ roomId, files }) => {
+      rooms[roomId] = files;
+      io.to(roomId).emit('filesUpdate', files);
+    });
+
+    socket.on('codeChange', ({ roomId, fileName, code }) => {
+      const fileIndex = (rooms[roomId] || []).findIndex(f => f.name === fileName);
+      if (fileIndex !== -1) {
+        rooms[roomId][fileIndex].content = code;
+        socket.to(roomId).emit('codeChange', { fileName, code });
+      }
+    });
+
+    socket.on('sendMessage', ({ roomId, message, username }) => {
+      if (!rooms[roomId]) rooms[roomId] = { messages: [] };
+      if (!Array.isArray(rooms[roomId].messages)) rooms[roomId].messages = [];
+      const msg = { username, message };
+      rooms[roomId].messages.push(msg);
+      io.to(roomId).emit('receiveMessage', msg);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ Client disconnected:', socket.id);
+    });
   });
 
-  socket.on("codeChange", ({ roomId, fileName, code }) => {
-    const fileIndex = (rooms[roomId] || []).findIndex(f => f.name === fileName);
-    if (fileIndex !== -1) {
-      rooms[roomId][fileIndex].content = code;
-      socket.to(roomId).emit("codeChange", { fileName, code });
-    }
+  const PORT = process.env.PORT || 4000;
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
-
-  socket.on("sendMessage", ({ roomId, message, username }) => {
-    if (!rooms[roomId]) rooms[roomId] = { messages: [] };
-    if (!Array.isArray(rooms[roomId].messages)) rooms[roomId].messages = [];
-    const msg = { username, message };
-    rooms[roomId].messages.push(msg);
-    io.to(roomId).emit("receiveMessage", msg);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
-  });
-});
-
-// ✅ Start server
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
 });

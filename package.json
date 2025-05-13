@@ -2,11 +2,10 @@
   "name": "codecollab",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
+ "scripts": {
+    "dev": "node server.js",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.6",

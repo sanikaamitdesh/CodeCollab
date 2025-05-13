@@ -692,7 +692,7 @@ const Editor = ({ roomId }) => {
   const socketRef = useRef(null);
   const [username, setUsername] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL||"http://localhost:4000";
+  const BACKEND_URL = process.env.ALLOWED_ORIGINS||"http://localhost:4000";
   // const [username, setUsername] = useState(null);
   useEffect(() => {
     const token = localStorage.getItem("token");
