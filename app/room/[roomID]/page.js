@@ -32,7 +32,7 @@ export default function RoomPage() {
 
   const searchParams = useSearchParams();
   const username = searchParams.get("username");
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL||"http://localhost:4000";
+  const BACKEND_URL ="https://codecollab-2-u456.onrender.com";
   useEffect(() => {
     if (!roomID) return; // Prevent running if roomID is undefined
     // Connect to socket server

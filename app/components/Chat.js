@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL||"http://localhost:4000";
+const BACKEND_URL = "https://codecollab-2-u456.onrender.com";
 const socket = io(BACKEND_URL);
 
 export default function ChatRoom({ roomId, username }) {
