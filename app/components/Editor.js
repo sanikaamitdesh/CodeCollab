@@ -692,7 +692,7 @@ const Editor = ({ roomId }) => {
   const socketRef = useRef(null);
   const [username, setUsername] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const BACKEND_URL = "https://codecollab-2-u456.onrender.com";
+  const BACKEND_URL = " ";
   // const [username, setUsername] = useState(null);
   useEffect(() => {
     const token = localStorage.getItem("token");
