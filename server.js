@@ -688,28 +688,32 @@ nextApp.prepare().then(() => {
 
     socket.on("joinRoom", (roomId) => {
       socket.join(roomId);
-      if (!rooms[roomId]) rooms[roomId] = [];
-      socket.emit("filesUpdate", rooms[roomId]);
+      if (!rooms[roomId]) rooms[roomId] = { files: [], messages: [] };
+      socket.emit("filesUpdate", rooms[roomId].files);
+      
     });
 
     socket.on("filesUpdate", ({ roomId, files }) => {
-      rooms[roomId] = files;
+      if (!rooms[roomId]) rooms[roomId] = { files: [], messages: [] };
+      rooms[roomId].files = files;
       io.to(roomId).emit("filesUpdate", files);
     });
-
+    
     socket.on("codeChange", ({ roomId, fileName, code }) => {
-      const index = (rooms[roomId] || []).findIndex(f => f.name === fileName);
+      const fileList = rooms[roomId]?.files || [];
+      const index = fileList.findIndex(f => f.name === fileName);
       if (index !== -1) {
-        rooms[roomId][index].content = code;
+        fileList[index].content = code;
         socket.to(roomId).emit("codeChange", { fileName, code });
       }
     });
-
+    
     socket.on("sendMessage", ({ roomId, message, username }) => {
-      if (!rooms[roomId]) rooms[roomId] = { messages: [] };
+      if (!rooms[roomId]) rooms[roomId] = { files: [], messages: [] };
       rooms[roomId].messages.push({ username, message });
       io.to(roomId).emit("receiveMessage", { username, message });
     });
+    
 
     socket.on("disconnect", () => {
       console.log("❌ Disconnected:", socket.id);
