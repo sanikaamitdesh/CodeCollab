@@ -35,38 +35,40 @@ nextApp.prepare().then(() => {
     console.log("⚡ Connected:", socket.id);
 
     // 🧑‍💻 VIDEO CALLING
-    socket.on("join-video", ({ roomId }) => {
-      if (!videoRooms[roomId]) videoRooms[roomId] = [];
-
-      videoRooms[roomId].forEach((existingSocketId) => {
-        socket.emit("user-joined-video", { peerId: existingSocketId });
-      });
-
-      videoRooms[roomId].push(socket.id);
+    socket.on("join-video", ({ roomId, userId }) => {
+      console.log(`${userId} joined room ${roomId}`);
+      userSocketMap[userId] = socket.id;
       socket.join(roomId);
-      socket.to(roomId).emit("user-joined-video", { peerId: socket.id });
-
-      console.log(`🟢 ${socket.id} joined video in room ${roomId}`);
+      // Notify others in room
+      socket.to(roomId).emit("user-joined-video", { peerId: userId });
     });
-
-    socket.on("leave-video", ({ roomId }) => {
-      if (videoRooms[roomId]) {
-        videoRooms[roomId] = videoRooms[roomId].filter((id) => id !== socket.id);
-        socket.to(roomId).emit("user-left-video", { peerId: socket.id });
-        console.log(`🔴 ${socket.id} left video in room ${roomId}`);
+  
+    socket.on("video-offer", ({ target, caller, sdp }) => {
+      const targetSocketId = userSocketMap[target];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("video-offer", { caller, sdp });
       }
     });
-
-    socket.on("video-offer", ({ target, caller, sdp }) => {
-      io.to(target).emit("video-offer", { caller, sdp });
-    });
-
+  
     socket.on("video-answer", ({ target, caller, sdp }) => {
-      io.to(target).emit("video-answer", { caller, sdp });
+      const targetSocketId = userSocketMap[target];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("video-answer", { caller, sdp });
+      }
     });
-
+  
     socket.on("ice-candidate", ({ target, from, candidate }) => {
-      io.to(target).emit("ice-candidate", { from, candidate });
+      const targetSocketId = userSocketMap[target];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("ice-candidate", { from, candidate });
+      }
+    });
+  
+    socket.on("leave-video", ({ roomId, userId }) => {
+      console.log(`${userId} left room ${roomId}`);
+      socket.leave(roomId);
+      delete userSocketMap[userId];
+      socket.to(roomId).emit("user-left-video", { peerId: userId });
     });
 
     // 💻 FILE & CHAT HANDLERS
@@ -97,15 +99,16 @@ nextApp.prepare().then(() => {
       io.to(roomId).emit("receiveMessage", { username, message });
     });
 
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected:", socket.id);
-      for (const roomId in videoRooms) {
-        if (videoRooms[roomId].includes(socket.id)) {
-          videoRooms[roomId] = videoRooms[roomId].filter((id) => id !== socket.id);
-          socket.to(roomId).emit("user-left-video", { peerId: socket.id });
-        }
-      }
-    });
+   
+  socket.on("disconnect", () => {
+    const userId = Object.keys(userSocketMap).find(
+      (key) => userSocketMap[key] === socket.id
+    );
+    if (userId) {
+      delete userSocketMap[userId];
+      console.log("Client disconnected:", socket.id, userId);
+    }
+  });
   });
 
   // Serve Next.js frontend
