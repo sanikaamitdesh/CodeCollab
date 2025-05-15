@@ -1,9 +1,9 @@
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import next from "next";
-import dotenv from "dotenv";
-import cors from "cors";
+const express = require("express");
+const {createServer} = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+const next = require("next");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
@@ -13,12 +13,12 @@ const handle = nextApp.getRequestHandler();
 
 const allowedOrigins = [
   "https://codecollab-2-u456.onrender.com",
-  "http://localhost:3000"
+  "http://localhost:3000",
 ];
 
 const videoRooms = {}; // To track video call users
-const rooms = {};      // For file/code/chat
-const userSocketMap = {};
+const rooms = {}; // For file/code/chat
+
 nextApp.prepare().then(() => {
   const app = express();
   const server = createServer(app);
@@ -36,17 +36,25 @@ nextApp.prepare().then(() => {
 
     // 🧑‍💻 VIDEO CALLING
     socket.on("join-video", ({ roomId, userId }) => {
-      console.log(`${userId} joined room ${roomId}`);
-      userSocketMap[userId] = socket.id;
+      if (!videoRooms[roomId]) videoRooms[roomId] = [];
+
+      // Notify the new user of existing peers
+      videoRooms[roomId].forEach((existingUserId) => {
+        socket.emit("user-joined-video", { peerId: existingUserId });
+      });
+
+      // Add new user and notify others
+      videoRooms[roomId].push(userId);
       socket.join(roomId);
       // Notify others in room
       socket.to(roomId).emit("user-joined-video", { peerId: userId });
     });
-  
-    socket.on("video-offer", ({ target, caller, sdp }) => {
-      const targetSocketId = userSocketMap[target];
-      if (targetSocketId) {
-        io.to(targetSocketId).emit("video-offer", { caller, sdp });
+
+    socket.on("leave-video", ({ roomId, userId }) => {
+      if (videoRooms[roomId]) {
+        videoRooms[roomId] = videoRooms[roomId].filter((id) => id !== userId);
+        socket.to(roomId).emit("user-left-video", { peerId: userId });
+        console.log(`🔴 ${userId} left video in room ${roomId}`);
       }
     });
   
@@ -86,7 +94,7 @@ nextApp.prepare().then(() => {
 
     socket.on("codeChange", ({ roomId, fileName, code }) => {
       const fileList = rooms[roomId]?.files || [];
-      const index = fileList.findIndex(f => f.name === fileName);
+      const index = fileList.findIndex((f) => f.name === fileName);
       if (index !== -1) {
         fileList[index].content = code;
         socket.to(roomId).emit("codeChange", { fileName, code });
