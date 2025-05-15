@@ -18,7 +18,7 @@ const allowedOrigins = [
 
 const videoRooms = {}; // To track video call users
 const rooms = {};      // For file/code/chat
-
+const userSocketMap = {};
 nextApp.prepare().then(() => {
   const app = express();
   const server = createServer(app);
