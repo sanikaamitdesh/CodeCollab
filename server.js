@@ -18,7 +18,7 @@ const allowedOrigins = [
 
 const videoRooms = {}; // To track video call users
 const rooms = {};      // For file/code/chat
-
+const userSocketMap = {};
 nextApp.prepare().then(() => {
   const app = express();
   const server = createServer(app);
@@ -29,47 +29,46 @@ nextApp.prepare().then(() => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-  });
+  }); 
 
   io.on("connection", (socket) => {
     console.log("⚡ Connected:", socket.id);
 
     // 🧑‍💻 VIDEO CALLING
     socket.on("join-video", ({ roomId, userId }) => {
-      if (!videoRooms[roomId]) videoRooms[roomId] = [];
-
-      // Notify the new user of existing peers
-      videoRooms[roomId].forEach(existingUserId => {
-        socket.emit("user-joined-video", { peerId: existingUserId });
-      });
-
-      // Add new user and notify others
-      videoRooms[roomId].push(userId);
+      console.log(`${userId} joined room ${roomId}`);
+      userSocketMap[userId] = socket.id;
       socket.join(roomId);
+      // Notify others in room
       socket.to(roomId).emit("user-joined-video", { peerId: userId });
-      console.log(`🟢 ${userId} joined video in room ${roomId}`);
     });
-
-    socket.on("leave-video", ({ roomId, userId }) => {
-      if (videoRooms[roomId]) {
-        videoRooms[roomId] = videoRooms[roomId].filter(id => id !== userId);
-        socket.to(roomId).emit("user-left-video", { peerId: userId });
-        console.log(`🔴 ${userId} left video in room ${roomId}`);
+  
+    socket.on("video-offer", ({ target, caller, sdp }) => {
+      const targetSocketId = userSocketMap[target];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("video-offer", { caller, sdp });
       }
     });
-
-    socket.on("video-offer", ({ target, caller, sdp }) => {
-      io.to(target).emit("video-offer", { caller, sdp });
-      console.log(`📤 Offer from ${caller} to ${target}`);
-    });
-
+  
     socket.on("video-answer", ({ target, caller, sdp }) => {
-      io.to(target).emit("video-answer", { caller, sdp });
-      console.log(`📥 Answer from ${caller} to ${target}`);
+      const targetSocketId = userSocketMap[target];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("video-answer", { caller, sdp });
+      }
     });
-
+  
     socket.on("ice-candidate", ({ target, from, candidate }) => {
-      io.to(target).emit("ice-candidate", { from, candidate });
+      const targetSocketId = userSocketMap[target];
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("ice-candidate", { from, candidate });
+      }
+    });
+  
+    socket.on("leave-video", ({ roomId, userId }) => {
+      console.log(`${userId} left room ${roomId}`);
+      socket.leave(roomId);
+      delete userSocketMap[userId];
+      socket.to(roomId).emit("user-left-video", { peerId: userId });
     });
 
     // 💻 FILE & CHAT HANDLERS
@@ -100,9 +99,16 @@ nextApp.prepare().then(() => {
       io.to(roomId).emit("receiveMessage", { username, message });
     });
 
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected:", socket.id);
-    });
+   
+  socket.on("disconnect", () => {
+    const userId = Object.keys(userSocketMap).find(
+      (key) => userSocketMap[key] === socket.id
+    );
+    if (userId) {
+      delete userSocketMap[userId];
+      console.log("Client disconnected:", socket.id, userId);
+    }
+  });
   });
 
   // Serve Next.js frontend
