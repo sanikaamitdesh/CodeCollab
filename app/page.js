@@ -124,7 +124,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center h-full relative px-4">
+      <div className="flex items-center justify-center h-[90vh] relative px-4">
 
         <div className="bg-gray-800 p-10 rounded-2xl shadow-lg z-10 flex flex-col items-center w-full max-w-md">
           <h2 className="text-3xl font-bold mb-12 text-white">Try CodeCollab</h2>

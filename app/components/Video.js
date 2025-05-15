@@ -577,15 +577,42 @@ export default function VideoChat({ roomId, socket, userId, setShowVideo }) {
       </div>
 
       {/* Controls */}
-      <div className="p-4 flex justify-center gap-4 bg-gray-900">
-        <Button onClick={toggleMute} variant="outline">
-          {isMuted ? <MicOff /> : <Mic />}
+      <div className="bg-gray-800 p-4 flex justify-center items-center space-x-4">
+        <Button
+          variant="outline"
+          size="icon"
+          className={`flex items-center justify-center rounded-full ${
+            isMuted ? "bg-red-600 text-white" : "bg-gray-700 text-white"
+          }`}
+          onClick={toggleMute}
+        >
+          {isMuted ? (
+            <MicOff className="h-5 w-5" />
+          ) : (
+            <Mic className="h-5 w-5" />
+          )}
         </Button>
-        <Button onClick={toggleVideo} variant="outline">
-          {isVideoOff ? <VideoOff /> : <Video />}
+        <Button
+          variant="outline"
+          size="icon"
+          className={`flex items-center justify-center rounded-full ${
+            isVideoOff ? "bg-red-600 text-white" : "bg-gray-700 text-white"
+          }`}
+          onClick={toggleVideo}
+        >
+          {isVideoOff ? (
+            <VideoOff className="h-5 w-5" />
+          ) : (
+            <Video className="h-5 w-5" />
+          )}
         </Button>
-        <Button onClick={leaveCall} variant="destructive">
-          <PhoneOff />
+        <Button
+          variant="outline"
+          size="icon"
+          className="flex items-center justify-center rounded-full bg-red-600 text-white"
+          onClick={leaveCall}
+        >
+          <PhoneOff className="h-5 w-5" />
         </Button>
       </div>
     </div>
