@@ -23,20 +23,31 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 text-white p-4 flex flex-col">
+      <aside className="w-full md:w-64 bg-gray-800 text-white p-4 flex flex-col">
         <h2 className="text-lg font-bold mb-4">CodeCollab</h2>
         <nav className="flex flex-col gap-2">
-          <Link href="/dashboard" className="bg-gray-700 p-2 rounded">Dashboard</Link>
-          <Link href="/create-room" className="bg-gray-700 p-2 rounded">Create Room</Link>
-          <Link href="/join-room" className="bg-gray-700 p-2 rounded">Join Room</Link>
-          <button onClick={handleLogout} className="bg-red-600 p-2 mt-4 rounded">Logout</button>
+          <Link href="/dashboard" className="bg-gray-700 p-2 rounded">
+            Dashboard
+          </Link>
+          <Link href="/create-room" className="bg-gray-700 p-2 rounded">
+            Create Room
+          </Link>
+          <Link href="/join-room" className="bg-gray-700 p-2 rounded">
+            Join Room
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 p-2 mt-4 rounded"
+          >
+            Logout
+          </button>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }
