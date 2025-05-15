@@ -1,9 +1,9 @@
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import next from "next";
-import dotenv from "dotenv";
-import cors from "cors";
+const express = require("express");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const next = require("next");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
 dotenv.config();
 
