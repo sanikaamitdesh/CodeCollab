@@ -29,43 +29,40 @@ nextApp.prepare().then(() => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-  });
+  }); 
 
   io.on("connection", (socket) => {
     console.log("⚡ Connected:", socket.id);
 
     // 🧑‍💻 VIDEO CALLING
-    socket.on("join-video", ({ roomId, userId }) => {
+    socket.on("join-video", ({ roomId }) => {
       if (!videoRooms[roomId]) videoRooms[roomId] = [];
 
-      // Notify the new user of existing peers
-      videoRooms[roomId].forEach(existingUserId => {
-        socket.emit("user-joined-video", { peerId: existingUserId });
+      videoRooms[roomId].forEach((existingSocketId) => {
+        socket.emit("user-joined-video", { peerId: existingSocketId });
       });
 
-      // Add new user and notify others
-      videoRooms[roomId].push(userId);
+      videoRooms[roomId].push(socket.id);
       socket.join(roomId);
-      socket.to(roomId).emit("user-joined-video", { peerId: userId });
-      console.log(`🟢 ${userId} joined video in room ${roomId}`);
+      socket.to(roomId).emit("user-joined-video", { peerId: socket.id });
+
+      console.log(`🟢 ${socket.id} joined video in room ${roomId}`);
     });
 
-    socket.on("leave-video", ({ roomId, userId }) => {
+    socket.on("leave-video", ({ roomId }) => {
       if (videoRooms[roomId]) {
-        videoRooms[roomId] = videoRooms[roomId].filter(id => id !== userId);
-        socket.to(roomId).emit("user-left-video", { peerId: userId });
-        console.log(`🔴 ${userId} left video in room ${roomId}`);
+        videoRooms[roomId] = videoRooms[roomId].filter((id) => id !== socket.id);
+        socket.to(roomId).emit("user-left-video", { peerId: socket.id });
+        console.log(`🔴 ${socket.id} left video in room ${roomId}`);
       }
     });
 
     socket.on("video-offer", ({ target, caller, sdp }) => {
       io.to(target).emit("video-offer", { caller, sdp });
-      console.log(`📤 Offer from ${caller} to ${target}`);
     });
 
     socket.on("video-answer", ({ target, caller, sdp }) => {
       io.to(target).emit("video-answer", { caller, sdp });
-      console.log(`📥 Answer from ${caller} to ${target}`);
     });
 
     socket.on("ice-candidate", ({ target, from, candidate }) => {
@@ -102,6 +99,12 @@ nextApp.prepare().then(() => {
 
     socket.on("disconnect", () => {
       console.log("❌ Disconnected:", socket.id);
+      for (const roomId in videoRooms) {
+        if (videoRooms[roomId].includes(socket.id)) {
+          videoRooms[roomId] = videoRooms[roomId].filter((id) => id !== socket.id);
+          socket.to(roomId).emit("user-left-video", { peerId: socket.id });
+        }
+      }
     });
   });
 

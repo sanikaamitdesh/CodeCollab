@@ -39,7 +39,7 @@ export default function VideoChat({ roomId, socket, userId, setShowVideo }) {
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
-        socket.emit("join-video", { roomId, userId });
+        socket.emit("join-video", { roomId });
          // Notify server that user joined with video
          console.log("Emitting join-video event", { roomId, userId });
       } catch (error) {
