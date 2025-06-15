@@ -86,6 +86,8 @@ const Editor = ({ roomId }) => {
   const router = useRouter();
   const [files, setFiles] = useState([]);
   const [activeFile, setActiveFile] = useState(0);
+  const [inputText, setInputText] = useState("");
+
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [socket, setSocket] = useState(null);
@@ -249,7 +251,8 @@ const Editor = ({ roomId }) => {
         },
         body: JSON.stringify({
           source_code: code,
-          language_id: languageId
+          language_id: languageId,
+          stdin:inputText,
         })
       });
 
@@ -480,7 +483,7 @@ const Editor = ({ roomId }) => {
       {/* Code Editor and Output */}
       <div style={{ flexGrow: 1, padding: "15px", background: "#1e1e1e", color: "white" }}>
         {files.length > 0 && (
-          <>
+          <> 
             <MonacoEditor
               height="70vh"
               language={files[activeFile].language}
@@ -492,6 +495,17 @@ const Editor = ({ roomId }) => {
                 fontFamily: "Consolas, 'Courier New', monospace"
               }}
             />
+        
+            <div className="mt-3">
+  <label className="text-white block mb-1 text-sm">Input:</label>
+  <textarea
+    rows={4}
+    value={inputText}
+    onChange={(e) => setInputText(e.target.value)}
+    placeholder="Enter input here..."
+    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
+  ></textarea>
+</div>
             <div style={{ marginTop: "10px", background: "#333", color: "white", padding: "15px", borderRadius: "5px" }}>
               <h3 style={{ fontSize: "1.1rem", marginBottom: "5px" }}>Output:</h3>
               <pre style={{ fontSize: "0.95rem", whiteSpace: "pre-wrap" }}>{output}</pre>
