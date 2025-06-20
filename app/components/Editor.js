@@ -326,109 +326,96 @@ const Editor = ({ roomId }) => {
  *  … keep exactly as you already have it …
  * ----------------------------------------------------------------*/
 
-return (
-  <div className="flex min-h-screen bg-gray-900 text-white">
-    {/* --- fixed top-right auth bar -------------------------------- */}
-    <div className="fixed top-3 right-6 flex gap-3 z-50">
-      {username ? (
-        <>
-          <span className="hidden sm:inline">👤 {username}</span>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="btn-primary">Dashboard</button>
-          <button
-            onClick={handleLogout}
-            className="btn-danger">Logout</button>
-        </>
-      ) : (
-        <>
-          <button onClick={() => router.push('/login')}  className="btn-blue">Login</button>
-          <button onClick={() => router.push('/signup')} className="btn-primary">Signup</button>
-        </>
-      )}
-    </div>
-
-    {/* --- sidebar (mobile collapses with max-w-0) ----------------- */}
-    <aside className="flex-shrink-0 w-64 max-sm:w-0 max-sm:hidden
-                       bg-gray-800 border-r border-gray-700 p-4 space-y-3">
-      <h3 className="text-lg font-semibold">Files</h3>
-
-      <div className="space-y-2 overflow-y-auto max-h-[45vh] pr-1">
-        {files.map((file, idx) => (
-          <button
-            key={idx}
-            onClick={() => setActiveFile(idx)}
-            className={`w-full px-3 py-2 text-left rounded
-                        ${activeFile === idx
-                          ? 'bg-gray-600'
-                          : 'bg-gray-700 hover:bg-gray-600'}`}>
-            {file.name}
-          </button>
-        ))}
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+      {/* Top Nav */}
+      <div className="flex justify-between items-center p-4 bg-gray-800 border-b border-gray-700">
+        <h1 className="text-lg font-bold">CodeCollab: Room {roomId}</h1>
+        <div className="sm:flex gap-2 hidden">
+          {username ? (
+            <>
+              <span className="text-sm">👤 {username}</span>
+              <button onClick={() => router.push('/dashboard')} className="btn-primary">Dashboard</button>
+              <button onClick={handleLogout} className="btn-danger">Logout</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => router.push('/login')} className="btn-blue">Login</button>
+              <button onClick={() => router.push('/signup')} className="btn-primary">Signup</button>
+            </>
+          )}
+        </div>
       </div>
 
-      <button onClick={() => setIsModalOpen(true)} className="btn-blue w-full">
-        + New File
-      </button>
-      <NewFileModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onCreate={handleCreateFile}
-      />
-
-      <button onClick={handleRunCode}    className="btn-green w-full">Run Code</button>
-      <button onClick={saveAllFiles}     className="btn-amber w-full">Save &amp; Download</button>
-    </aside>
-
-    {/* --- editor + io pane --------------------------------------- */}
-    <main className="flex-1 p-4 space-y-4 overflow-x-hidden">
-      {files.length > 0 && (
-        <>
-          <MonacoEditor
-            height="60vh"
-            language={files[activeFile].language}
-            value={files[activeFile].content}
-            onChange={handleEditorChange}
-            theme="vs-dark"
-            options={{ fontSize: 16 }}
-          />
-
-          {/* stdin box */}
-          <div>
-            <label className="block text-sm mb-1">Input:</label>
-            <textarea
-              rows={3}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded p-2 resize-none"
-              placeholder="Enter input here…" />
+      {/* Dropdown Toggle */}
+      <div className="sm:hidden bg-gray-800 border-b border-gray-700">
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          className="w-full text-left p-3 text-white font-semibold border-b border-gray-700">
+          ☰ Tools Menu
+        </button>
+        {showMenu && (
+          <div className="px-4 pb-4 space-y-3">
+            <button onClick={() => setIsModalOpen(true)} className="btn-blue w-full">+ New File</button>
+            <button onClick={handleRunCode} className="btn-green w-full">Run Code</button>
+            <button onClick={saveAllFiles} className="btn-amber w-full">Save & Download</button>
           </div>
+        )}
+      </div>
 
-          {/* output / error box */}
-          <div className="bg-gray-800 rounded p-4">
-            <h3 className="font-semibold mb-1">Output:</h3>
-            <pre className="whitespace-pre-wrap">{output || '—'}</pre>
-            {error && (
-              <>
-                <h3 className="font-semibold text-red-400 mt-3">Error:</h3>
-                <pre className="whitespace-pre-wrap text-red-300">{error}</pre>
-              </>
-            )}
+      {/* Main Layout */}
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="hidden sm:flex flex-col w-64 bg-gray-800 p-4 border-r border-gray-700 space-y-2">
+          <h3 className="text-lg font-semibold">Files</h3>
+          <div className="space-y-2 overflow-y-auto max-h-[45vh] pr-1">
+            {files.map((file, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveFile(idx)}
+                className={`w-full px-3 py-2 text-left rounded ${activeFile === idx ? 'bg-gray-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+              >{file.name}</button>
+            ))}
           </div>
-        </>
-      )}
-    </main>
-  </div>
-);
+        </aside>
 
-/* ---------- Tailwind helpers (add once, e.g. globals.css) -------------
-.btn-blue   { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded; }
-.btn-green  { @apply bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded; }
-.btn-amber  { @apply bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded; }
-.btn-primary{ @apply bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded; }
-.btn-danger { @apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded; }
--------------------------------------------------------------------------*/
+        <main className="flex-1 p-4 space-y-4 overflow-auto">
+          {files.length > 0 && (
+            <>
+              <MonacoEditor
+                height="60vh"
+                language={files[activeFile].language}
+                value={files[activeFile].content}
+                onChange={handleEditorChange}
+                theme="vs-dark"
+                options={{ fontSize: 16 }}
+              />
+              <div>
+                <label className="block text-sm mb-1">Input:</label>
+                <textarea
+                  rows={3}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-600 rounded p-2 resize-none"
+                  placeholder="Enter input here…"
+                />
+              </div>
+              <div className="bg-gray-800 rounded p-4">
+                <h3 className="font-semibold mb-1">Output:</h3>
+                <pre className="whitespace-pre-wrap">{output || '—'}</pre>
+                {error && (
+                  <>
+                    <h3 className="font-semibold text-red-400 mt-3">Error:</h3>
+                    <pre className="whitespace-pre-wrap text-red-300">{error}</pre>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </main>
+      </div>
 
-};
-
+      <NewFileModal open={isModalOpen} onOpenChange={setIsModalOpen} onCreate={handleCreateFile} />
+    </div>
+  );
+}
 export default Editor;
