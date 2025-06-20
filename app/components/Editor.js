@@ -322,197 +322,54 @@ const Editor = ({ roomId }) => {
   // );
 
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "Arial, sans-serif" }}>
-       <div style={{
-  position: "absolute",
-  top: "10px",
-  right: "20px",
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  zIndex: 1000 // ensures it's not hidden behind other content
-}}>
-  {username ? (
-    <>
-      <span style={{ color: "white" }}>👤 {username}</span>
-      <button
-        onClick={() => router.push("/dashboard")}
-        style={{
-          backgroundColor: "#4CAF50",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Dashboard
-      </button>
-      <button
-        onClick={handleLogout}
-        style={{
-          backgroundColor: "#f44336",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Logout
-      </button>
-    </>
-  ) : (
-    <>
-      <button
-        onClick={() => router.push("/login")}
-        style={{
-          backgroundColor: "#2196F3",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Login
-      </button>
-      <button
-        onClick={() => router.push("/signup")}
-        style={{
-          backgroundColor: "#4CAF50",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Signup
-      </button>
-    </>
-  )}
-</div>
-
-      {/* Sidebar for Files */}
-      <div style={{ 
-        width: "250px", 
-        background: "#282c34", 
-        color: "white", 
-        padding: "10px", 
-        display: "flex", 
-        flexDirection: "column", 
-        gap: "10px",
-        borderRight: "2px solid #333"
-      }}>
-        <h3 style={{ fontSize: "1.2rem", marginBottom: "10px" }}>Files</h3>
+    <div className="flex flex-col md:flex-row h-screen font-sans">
+      {/* Sidebar */}
+      <div className="w-full md:w-64 bg-[#282c34] text-white p-4 flex flex-col gap-3 border-r-2 border-gray-700">
+        <h3 className="text-lg font-semibold mb-2">Files</h3>
         {files.map((file, index) => (
           <button
             key={index}
             onClick={() => setActiveFile(index)}
-            style={{
-              margin: "5px 5px",
-              padding: "8px",
-              background: activeFile === index ? "grey" : "#524949",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              textAlign: "left",
-              fontSize: "0.9rem",
-              cursor: "pointer"
-            }}
+            className={`text-left px-3 py-2 rounded text-sm ${activeFile === index ? "bg-gray-600" : "bg-gray-700"}`}
           >
             {file.name}
           </button>
         ))}
-        <button 
-          // onClick={addNewFile} 
-          onClick={() => setIsModalOpen(true)} 
-          style={{ 
-            margin: "5px 0",
-            padding: "8px",
-            background: "#008CBA",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: "pointer"
-          }}
-        >
-          + New File
-        </button>
-        <NewFileModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onCreate={handleCreateFile}
-        />
-        <button 
-          onClick={handleRunCode} 
-          style={{ 
-            margin: "5px 0",
-            padding: "8px",
-            background: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: "pointer"
-          }}
-        >
-          Run Code
-        </button>
-       
-  <button 
-    onClick={saveAllFiles} 
-    style={{ 
-      margin: "5px 5px",
-      padding: "8px",
-      background: "#f9a825",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      fontSize: "0.9rem",
-      cursor: "pointer"
-    }}>
-    Save and Download Files
-  </button>
-
-
+        <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 py-2 rounded text-white">+ New File</button>
+        <NewFileModal open={isModalOpen} onOpenChange={setIsModalOpen} onCreate={handleCreateFile} />
+        <button onClick={handleRunCode} className="bg-green-600 py-2 rounded text-white">Run Code</button>
+        <button onClick={saveAllFiles} className="bg-yellow-600 py-2 rounded text-white">Save and Download Files</button>
       </div>
-  
-      {/* Code Editor and Output */}
-      <div style={{ flexGrow: 1, padding: "15px", background: "#1e1e1e", color: "white" }}>
+
+      {/* Main Content */}
+      <div className="flex-grow bg-[#1e1e1e] text-white p-4 overflow-y-auto">
         {files.length > 0 && (
-          <> 
+          <>
             <MonacoEditor
-              height="70vh"
+              height="60vh"
               language={files[activeFile].language}
               value={files[activeFile].content}
               onChange={handleEditorChange}
               theme="vs-dark"
-              options={{
-                fontSize: 16,
-                fontFamily: "Consolas, 'Courier New', monospace"
-              }}
+              options={{ fontSize: 16, fontFamily: "Consolas, 'Courier New', monospace" }}
             />
-        
-            <div className="mt-3">
-  <label className="text-white block mb-1 text-sm">Input:</label>
-  <textarea
-    rows={4}
-    value={inputText}
-    onChange={(e) => setInputText(e.target.value)}
-    placeholder="Enter input here..."
-    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-  ></textarea>
-</div>
-            <div style={{ marginTop: "10px", background: "#333", color: "white", padding: "15px", borderRadius: "5px" }}>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "5px" }}>Output:</h3>
-              <pre style={{ fontSize: "0.95rem", whiteSpace: "pre-wrap" }}>{output}</pre>
+            <div className="mt-4">
+              <label className="text-sm block mb-1">Input:</label>
+              <textarea
+                rows={4}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Enter input here..."
+                className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
+              ></textarea>
+            </div>
+            <div className="mt-4 bg-gray-800 p-4 rounded">
+              <h3 className="text-lg font-semibold">Output:</h3>
+              <pre className="whitespace-pre-wrap text-sm">{output}</pre>
               {error && (
                 <>
-                  <h3 style={{ color: "red", marginTop: "10px" }}>Error:</h3>
-                  <pre style={{ color: "lightcoral", whiteSpace: "pre-wrap" }}>{error}</pre>
+                  <h3 className="text-red-500 mt-2">Error:</h3>
+                  <pre className="text-red-300 whitespace-pre-wrap text-sm">{error}</pre>
                 </>
               )}
             </div>

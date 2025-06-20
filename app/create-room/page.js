@@ -41,15 +41,21 @@ export default function CreateRoom() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-4">Create Room</h1>
-      <button
-        onClick={handleCreateRoom}
-        disabled={loading}
-        className="bg-green-600 px-4 py-2 rounded text-white hover:bg-green-700"
-      >
-        {loading ? "Creating..." : "Create Room"}
-      </button>
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 px-4">
+      <div className="bg-gray-800 w-full max-w-sm sm:max-w-md md:max-w-lg p-6 sm:p-8 rounded-xl shadow-lg text-white text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6">Create a New Room</h1>
+        <button
+          onClick={handleCreateRoom}
+          disabled={loading}
+          className={`w-full py-3 rounded font-semibold ${
+            loading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {loading ? "Creating..." : "Create Room"}
+        </button>
+      </div>
     </div>
   );
 }
