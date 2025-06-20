@@ -23,9 +23,9 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex flex-col md:flex-row h-screen">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 text-white p-4 flex flex-col">
+      <aside className="w-full md:w-64 bg-gray-800 text-white p-4 flex flex-col">
         <h2 className="text-lg font-bold mb-4">CodeCollab</h2>
         <nav className="flex flex-col gap-2">
           <Link href="/dashboard" className="bg-gray-700 p-2 rounded">Dashboard</Link>
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-4 overflow-y-auto">{children}</main>
     </div>
   );
 }
