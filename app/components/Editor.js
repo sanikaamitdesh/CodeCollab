@@ -321,207 +321,114 @@ const Editor = ({ roomId }) => {
   //   </div>
   // );
 
-  return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "Arial, sans-serif" }}>
-       <div style={{
-  position: "absolute",
-  top: "10px",
-  right: "20px",
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  zIndex: 1000 // ensures it's not hidden behind other content
-}}>
-  {username ? (
-    <>
-      <span style={{ color: "white" }}>👤 {username}</span>
-      <button
-        onClick={() => router.push("/dashboard")}
-        style={{
-          backgroundColor: "#4CAF50",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Dashboard
-      </button>
-      <button
-        onClick={handleLogout}
-        style={{
-          backgroundColor: "#f44336",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Logout
-      </button>
-    </>
-  ) : (
-    <>
-      <button
-        onClick={() => router.push("/login")}
-        style={{
-          backgroundColor: "#2196F3",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Login
-      </button>
-      <button
-        onClick={() => router.push("/signup")}
-        style={{
-          backgroundColor: "#4CAF50",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "5px",
-          border: "none",
-          cursor: "pointer"
-        }}
-      >
-        Signup
-      </button>
-    </>
-  )}
-</div>
+  /* ----------------------------------------------------------------
+ *  ALL YOUR LOGIC (imports, hooks, run-code handler, etc.)
+ *  … keep exactly as you already have it …
+ * ----------------------------------------------------------------*/
 
-      {/* Sidebar for Files */}
-      <div style={{ 
-        width: "250px", 
-        background: "#282c34", 
-        color: "white", 
-        padding: "10px", 
-        display: "flex", 
-        flexDirection: "column", 
-        gap: "10px",
-        borderRight: "2px solid #333"
-      }}>
-        <h3 style={{ fontSize: "1.2rem", marginBottom: "10px" }}>Files</h3>
-        {files.map((file, index) => (
+return (
+  <div className="flex min-h-screen bg-gray-900 text-white">
+    {/* --- fixed top-right auth bar -------------------------------- */}
+    <div className="fixed top-3 right-6 flex gap-3 z-50">
+      {username ? (
+        <>
+          <span className="hidden sm:inline">👤 {username}</span>
           <button
-            key={index}
-            onClick={() => setActiveFile(index)}
-            style={{
-              margin: "5px 5px",
-              padding: "8px",
-              background: activeFile === index ? "grey" : "#524949",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              textAlign: "left",
-              fontSize: "0.9rem",
-              cursor: "pointer"
-            }}
-          >
+            onClick={() => router.push('/dashboard')}
+            className="btn-primary">Dashboard</button>
+          <button
+            onClick={handleLogout}
+            className="btn-danger">Logout</button>
+        </>
+      ) : (
+        <>
+          <button onClick={() => router.push('/login')}  className="btn-blue">Login</button>
+          <button onClick={() => router.push('/signup')} className="btn-primary">Signup</button>
+        </>
+      )}
+    </div>
+
+    {/* --- sidebar (mobile collapses with max-w-0) ----------------- */}
+    <aside className="flex-shrink-0 w-64 max-sm:w-0 max-sm:hidden
+                       bg-gray-800 border-r border-gray-700 p-4 space-y-3">
+      <h3 className="text-lg font-semibold">Files</h3>
+
+      <div className="space-y-2 overflow-y-auto max-h-[45vh] pr-1">
+        {files.map((file, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveFile(idx)}
+            className={`w-full px-3 py-2 text-left rounded
+                        ${activeFile === idx
+                          ? 'bg-gray-600'
+                          : 'bg-gray-700 hover:bg-gray-600'}`}>
             {file.name}
           </button>
         ))}
-        <button 
-          // onClick={addNewFile} 
-          onClick={() => setIsModalOpen(true)} 
-          style={{ 
-            margin: "5px 0",
-            padding: "8px",
-            background: "#008CBA",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: "pointer"
-          }}
-        >
-          + New File
-        </button>
-        <NewFileModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onCreate={handleCreateFile}
-        />
-        <button 
-          onClick={handleRunCode} 
-          style={{ 
-            margin: "5px 0",
-            padding: "8px",
-            background: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "0.9rem",
-            cursor: "pointer"
-          }}
-        >
-          Run Code
-        </button>
-       
-  <button 
-    onClick={saveAllFiles} 
-    style={{ 
-      margin: "5px 5px",
-      padding: "8px",
-      background: "#f9a825",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      fontSize: "0.9rem",
-      cursor: "pointer"
-    }}>
-    Save and Download Files
-  </button>
-
-
       </div>
-  
-      {/* Code Editor and Output */}
-      <div style={{ flexGrow: 1, padding: "15px", background: "#1e1e1e", color: "white" }}>
-        {files.length > 0 && (
-          <> 
-            <MonacoEditor
-              height="70vh"
-              language={files[activeFile].language}
-              value={files[activeFile].content}
-              onChange={handleEditorChange}
-              theme="vs-dark"
-              options={{
-                fontSize: 16,
-                fontFamily: "Consolas, 'Courier New', monospace"
-              }}
-            />
-        
-            <div className="mt-3">
-  <label className="text-white block mb-1 text-sm">Input:</label>
-  <textarea
-    rows={4}
-    value={inputText}
-    onChange={(e) => setInputText(e.target.value)}
-    placeholder="Enter input here..."
-    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-  ></textarea>
-</div>
-            <div style={{ marginTop: "10px", background: "#333", color: "white", padding: "15px", borderRadius: "5px" }}>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "5px" }}>Output:</h3>
-              <pre style={{ fontSize: "0.95rem", whiteSpace: "pre-wrap" }}>{output}</pre>
-              {error && (
-                <>
-                  <h3 style={{ color: "red", marginTop: "10px" }}>Error:</h3>
-                  <pre style={{ color: "lightcoral", whiteSpace: "pre-wrap" }}>{error}</pre>
-                </>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-  
+
+      <button onClick={() => setIsModalOpen(true)} className="btn-blue w-full">
+        + New File
+      </button>
+      <NewFileModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onCreate={handleCreateFile}
+      />
+
+      <button onClick={handleRunCode}    className="btn-green w-full">Run Code</button>
+      <button onClick={saveAllFiles}     className="btn-amber w-full">Save &amp; Download</button>
+    </aside>
+
+    {/* --- editor + io pane --------------------------------------- */}
+    <main className="flex-1 p-4 space-y-4 overflow-x-hidden">
+      {files.length > 0 && (
+        <>
+          <MonacoEditor
+            height="60vh"
+            language={files[activeFile].language}
+            value={files[activeFile].content}
+            onChange={handleEditorChange}
+            theme="vs-dark"
+            options={{ fontSize: 16 }}
+          />
+
+          {/* stdin box */}
+          <div>
+            <label className="block text-sm mb-1">Input:</label>
+            <textarea
+              rows={3}
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-600 rounded p-2 resize-none"
+              placeholder="Enter input here…" />
+          </div>
+
+          {/* output / error box */}
+          <div className="bg-gray-800 rounded p-4">
+            <h3 className="font-semibold mb-1">Output:</h3>
+            <pre className="whitespace-pre-wrap">{output || '—'}</pre>
+            {error && (
+              <>
+                <h3 className="font-semibold text-red-400 mt-3">Error:</h3>
+                <pre className="whitespace-pre-wrap text-red-300">{error}</pre>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </main>
+  </div>
+);
+
+/* ---------- Tailwind helpers (add once, e.g. globals.css) -------------
+.btn-blue   { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded; }
+.btn-green  { @apply bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded; }
+.btn-amber  { @apply bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded; }
+.btn-primary{ @apply bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded; }
+.btn-danger { @apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded; }
+-------------------------------------------------------------------------*/
+
 };
 
 export default Editor;
